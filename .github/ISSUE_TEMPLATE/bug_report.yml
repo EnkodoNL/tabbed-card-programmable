@@ -3,14 +3,14 @@ description: File a bug report
 title: "[Bug]: "
 labels: ["bug"]
 assignees:
-  - kinghat
+  - spasma
 body:
   - type: markdown
     attributes:
       value: |
         # Prerequisites
-        1. Check if your [issue](https://github.com/kinghat/tabbed-card/issues) has already been reported.
-        2. Be reasonably sure your issue is with `tabbed-card` specifically and not another component or home assistant itself.
+        1. Check if your [issue](https://github.com/enkodoNL/tabbed-card-programmable/issues) has already been reported.
+        2. Be reasonably sure your issue is with `tabbed-card-programmable` specifically and not another component or home assistant itself.
   - type: textarea
     id: description
     attributes:
@@ -27,7 +27,7 @@ body:
         - OS: [e.g. iOS, Linux]
         - Browser: [e.g. chrome, safari]
         - Home Assistant Version: [e.g. 2023.9.0]        
-        - Tabbed Card Version: [e.g. 0.3.2]
+        - Tabbed Card Version: [e.g. 0.3.4]
       render: Markdown
     validations:
       required: true
