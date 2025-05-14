@@ -11,7 +11,10 @@ import {
   LovelaceCardEditor,
   LovelaceConfig,
 } from "custom-card-helpers";
+import "./registry-patch.ts";
 import "./tabbed-card-editor";
+import "@material/mwc-tab-bar";
+import "@material/mwc-tab";
 
 interface mwcTabBarEvent extends Event {
   detail: {
@@ -61,8 +64,6 @@ export class TabbedCard extends LitElement {
 
   private async loadCardHelpers() {
     this._helpers = await (window as any).loadCardHelpers();
-
-    if (!customElements.get("mwc-tab-bar")) this._helpers.importMoreInfoControl("weather")
   }
 
   static async getConfigElement(): Promise<LovelaceCardEditor> {
@@ -177,7 +178,7 @@ export class TabbedCard extends LitElement {
     return html`
       <mwc-tab-bar
         @MDCTabBar:activated=${(ev: mwcTabBarEvent) =>
-          (this.selectedTabIndex = ev.detail.index)}
+        (this.selectedTabIndex = ev.detail.index)}
         style=${styleMap(this._styles)}
         activeIndex=${this.selectedTabIndex}
       >
@@ -195,11 +196,11 @@ export class TabbedCard extends LitElement {
                 ?stacked=${tab?.attributes?.stacked}
               >
                 ${tab?.attributes?.icon
-                  ? html`<ha-icon
+                ? html`<ha-icon
                       slot="icon"
                       icon="${tab?.attributes?.icon}"
                     ></ha-icon>`
-                  : html``}
+                : html``}
               </mwc-tab>
             `,
         )}
