@@ -10,6 +10,8 @@ import {
 } from "custom-card-helpers";
 import "./registry-patch.ts";
 import "./tabbed-card-editor";
+import "@material/web/tabs/tabs.js";
+import "@material/web/icon/icon.js";
 
 interface TabsActivatedEvent extends Event {
   detail: {
