@@ -44,6 +44,11 @@ interface Tab {
   card: LovelaceCardConfig;
 }
 
+// Store evaluated labels
+interface ProcessedTab extends Tab {
+  processedLabel?: string; // Processed label after Jinja evaluation
+}
+
 @customElement("tabbed-card-programmable")
 export class TabbedCard extends LitElement {
   @property({ attribute: false }) public hass!: HomeAssistant;
@@ -51,9 +56,10 @@ export class TabbedCard extends LitElement {
   @property() private _helpers: any;
 
   @state() private _config!: TabbedCardConfig;
-  @state() private _tabs!: Tab[];
+  @state() private _tabs!: ProcessedTab[];
   @state() private _hiddenTabs: boolean[] = [];
   @state() private _disabledTabs: boolean[] = [];
+  @state() private _processedLabels: string[] = [];
   @property() protected _styles = {
     "--md-sys-color-primary": "var(--primary-text-color)", // Color of the activated tab's text, indicator, and ripple.
     "--md-sys-color-on-surface-variant":
@@ -123,9 +129,10 @@ export class TabbedCard extends LitElement {
       this.selectedTabIndex = isFinite(template) ? template : 0;
     }
 
-    // Initialize arrays to track hidden and disabled states
+    // Initialize arrays to track hidden and disabled states and processed labels
     this._hiddenTabs = [];
     this._disabledTabs = [];
+    this._processedLabels = [];
 
     const tabs = await Promise.all(
       config.tabs.map(async (tab) => {
@@ -161,11 +168,33 @@ export class TabbedCard extends LitElement {
         }
         this._disabledTabs.push(disableTab);
 
+        // Process label if it's a Jinja template
+        let processedLabel = tab?.attributes?.label || "";
+        if (
+          (typeof processedLabel === "string" &&
+            processedLabel.includes("{%")) ||
+          processedLabel.includes("{{")
+        ) {
+          try {
+            // Evaluate Jinja template
+            processedLabel = await this.evaluateJinjaTemplate(
+              this.hass,
+              processedLabel,
+            );
+          } catch (error) {
+            console.error(
+              `[tabbed-card-programmable] Error evaluating label template: ${error}`,
+            );
+          }
+        }
+        this._processedLabels.push(processedLabel);
+
         // Create tab (even if hidden)
         return {
           styles: tab?.styles,
           attributes: { ...config?.attributes, ...tab?.attributes },
           card: await this._createCard(tab.card),
+          processedLabel: processedLabel,
         };
       }),
     );
@@ -261,13 +290,33 @@ export class TabbedCard extends LitElement {
     return html`
       <md-tabs
         @change=${(ev: TabsActivatedEvent) => {
-          // Map the visible tab index back to the original tab index
-          const visibleIndex = ev.detail.index;
-          const originalIndex = visibleTabs[visibleIndex].index;
+          try {
+            // Map the visible tab index back to the original tab index
+            const visibleIndex = ev.detail.index;
 
-          // Only update selectedTabIndex if the tab is not disabled
-          if (!this._disabledTabs[originalIndex]) {
-            this.selectedTabIndex = originalIndex;
+            // Check if the index is valid
+            if (
+              visibleIndex === undefined ||
+              visibleIndex < 0 ||
+              visibleIndex >= visibleTabs.length
+            ) {
+              console.warn(
+                `[tabbed-card-programmable] Invalid tab index: ${visibleIndex}`,
+              );
+              return;
+            }
+
+            const originalIndex = visibleTabs[visibleIndex].index;
+
+            // Only update selectedTabIndex if the tab is not disabled
+            if (!this._disabledTabs[originalIndex]) {
+              this.selectedTabIndex = originalIndex;
+            }
+          } catch (error) {
+            console.error(
+              "[tabbed-card-programmable] Error in tab change handler:",
+              error,
+            );
           }
         }}
         style=${styleMap(this._styles)}
@@ -300,7 +349,11 @@ export class TabbedCard extends LitElement {
                     icon="${tab?.attributes?.icon}"
                   ></ha-icon>`
                 : html``}
-              <span>${tab?.attributes?.label || nothing}</span>
+              <span
+                >${tab?.processedLabel ||
+                tab?.attributes?.label ||
+                nothing}</span
+              >
             </md-primary-tab>
           `,
         )}

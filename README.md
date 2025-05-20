@@ -4,16 +4,28 @@
 
 A custom card for home assistant that utilizes tabs to segregate individual cards.
 
-#### Changes from kinghat's version:
+![Tabbed Card](assets/tabbed-card.png)
+
+## Changes from kinghat's version:
 
 As the original dev kinghat did not respond to my pull request (https://github.com/kinghat/tabbed-card/pull/105) for a long time, I decided to fork and publish this as a separate card.
 
-- Added support for conditional default index of tabs using Jinja templates
+### v0.3.6 - 2025-05-20
+
+Needed some features for my own use case, so I added them to this fork:
+
 - Added support for hiding and disabling tabs using the `hide` and `disable` attributes. Both attributes support boolean values or Jinja templates that evaluate to boolean values.
+- Added support for dynamic tab labels using Jinja templates
 - Upgraded from deprecated `@material/mwc-tab-bar` and `@material/mwc-tab` to the newer `@material/web` package
 - Removed support for `isFadingIndicator` and `isMinWidthIndicator` attributes (no longer supported by Material Web)
 
-![Tabbed Card](assets/tabbed-card.png)
+### v0.3.5 - 2025-05-14
+
+- Backported a fix for HA 2025.5.0+
+
+### v0.3.4 - 2023-10-24
+
+- Added support for conditional default index of tabs using Jinja templates
 
 ## Installation
 
@@ -134,7 +146,7 @@ See the full list of exposed custom properties: [`<md-tabs>` and `<md-primary-ta
 
 | Name       | Default | Description                                                     |
 | ---------- | ------- | --------------------------------------------------------------- |
-| `label`    | `""`    | Text label to display in tab.                                   |
+| `label`    | `""`    | Text label to display in tab. Supports Jinja templates.         |
 | `icon`     | `""`    | Home Assistant `mdi:icon` name.                                 |
 | `minWidth` | `false` | Shrinks tab as narrow as possible without causing text to wrap. |
 | `stacked`  | `false` | Stacks icon on top of label text.                               |
@@ -208,9 +220,32 @@ tabs:
 
 ![Local Attributes](assets/local-attributes.png)
 
-## Hide and Disable Tabs
+## Dynamic Tab Features
+
+### Hide and Disable Tabs
 
 You can hide or disable tabs using the `hide` and `disable` attributes. Both attributes support boolean values or Jinja templates that evaluate to boolean values.
+
+### Dynamic Tab Labels
+
+You can use Jinja templates in the `label` attribute to create dynamic tab labels that change based on conditions or entity states:
+
+```yaml
+type: custom:tabbed-card-programmable
+tabs:
+  - attributes:
+      label: "Temperature: {{ states('sensor.temperature') }}°C"
+    card:
+      type: entities
+      entities:
+        - sensor.temperature
+  - attributes:
+      label: "{% if is_state('light.living_room', 'on') %}Light ON{% else %}Light OFF{% endif %}"
+    card:
+      type: entities
+      entities:
+        - light.living_room
+```
 
 ### Using boolean values:
 
