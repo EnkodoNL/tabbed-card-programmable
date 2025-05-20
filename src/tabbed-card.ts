@@ -291,12 +291,22 @@ export class TabbedCard extends LitElement {
       <md-tabs
         @change=${(ev: TabsActivatedEvent) => {
           try {
+            // Safely access the event detail
+            if (!ev || !ev.detail) {
+              console.warn(
+                "[tabbed-card-programmable] Invalid change event:",
+                ev,
+              );
+              return;
+            }
+
             // Map the visible tab index back to the original tab index
             const visibleIndex = ev.detail.index;
 
             // Check if the index is valid
             if (
               visibleIndex === undefined ||
+              visibleIndex === null ||
               visibleIndex < 0 ||
               visibleIndex >= visibleTabs.length
             ) {
@@ -306,7 +316,17 @@ export class TabbedCard extends LitElement {
               return;
             }
 
-            const originalIndex = visibleTabs[visibleIndex].index;
+            // Safely access the visible tab
+            const visibleTab = visibleTabs[visibleIndex];
+            if (!visibleTab || typeof visibleTab.index !== "number") {
+              console.warn(
+                `[tabbed-card-programmable] Invalid visible tab at index ${visibleIndex}:`,
+                visibleTab,
+              );
+              return;
+            }
+
+            const originalIndex = visibleTab.index;
 
             // Only update selectedTabIndex if the tab is not disabled
             if (!this._disabledTabs[originalIndex]) {
