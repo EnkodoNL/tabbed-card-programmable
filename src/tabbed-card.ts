@@ -10,10 +10,11 @@ import {
 } from "custom-card-helpers";
 import "./registry-patch.ts";
 import "./tabbed-card-editor";
-import "@material/mwc-tab-bar";
-import "@material/mwc-tab";
+import "@material/web/tabs/tabs.js";
+import "@material/web/tabs/primary-tab.js";
+import "@material/web/icon/icon.js";
 
-interface mwcTabBarEvent extends Event {
+interface TabsActivatedEvent extends Event {
   detail: {
     index: number;
   };
@@ -35,9 +36,7 @@ interface Tab {
   attributes?: {
     label?: string;
     icon?: string;
-    isFadingIndicator?: boolean;
     minWidth?: boolean;
-    isMinWidthIndicator?: boolean;
     stacked?: boolean;
     hide?: boolean | string; // Option to hide the tab
     disable?: boolean | string; // Option to disable the tab
@@ -56,11 +55,11 @@ export class TabbedCard extends LitElement {
   @state() private _hiddenTabs: boolean[] = [];
   @state() private _disabledTabs: boolean[] = [];
   @property() protected _styles = {
-    "--mdc-theme-primary": "var(--primary-text-color)", // Color of the activated tab's text, indicator, and ripple.
-    "--mdc-tab-text-label-color-default":
+    "--md-sys-color-primary": "var(--primary-text-color)", // Color of the activated tab's text, indicator, and ripple.
+    "--md-sys-color-on-surface-variant":
       "rgba(var(--rgb-primary-text-color), 0.8)", // Color of an unactivated tab label.
-    "--mdc-tab-color-default": "rgba(var(--rgb-primary-text-color), 0.7)", // Color of an unactivated icon.
-    "--mdc-typography-button-font-size": "14px",
+    "--md-sys-color-on-surface": "rgba(var(--rgb-primary-text-color), 0.7)", // Color of an unactivated icon.
+    "--md-sys-typescale-label-large-font-size": "14px",
   };
 
   private async loadCardHelpers() {
@@ -99,7 +98,7 @@ export class TabbedCard extends LitElement {
   }
 
   protected willUpdate(
-    _changedProperties: PropertyValueMap<any> | Map<PropertyKey, unknown>
+    _changedProperties: PropertyValueMap<any> | Map<PropertyKey, unknown>,
   ): void {
     if (_changedProperties.has("_helpers")) {
       this._createTabs(this._config);
@@ -134,7 +133,7 @@ export class TabbedCard extends LitElement {
             // Evaluate Jinja template
             const hideResult = await this.evaluateJinjaTemplate(
               this.hass,
-              tab.attributes.hide
+              tab.attributes.hide,
             );
             hideTab = hideResult.toLowerCase() === "true";
           } else {
@@ -150,7 +149,7 @@ export class TabbedCard extends LitElement {
             // Evaluate Jinja template
             const disableResult = await this.evaluateJinjaTemplate(
               this.hass,
-              tab.attributes.disable
+              tab.attributes.disable,
             );
             disableTab = disableResult.toLowerCase() === "true";
           } else {
@@ -165,7 +164,7 @@ export class TabbedCard extends LitElement {
           attributes: { ...config?.attributes, ...tab?.attributes },
           card: await this._createCard(tab.card),
         };
-      })
+      }),
     );
 
     this._tabs = tabs;
@@ -200,7 +199,7 @@ export class TabbedCard extends LitElement {
         ev.stopPropagation();
         this._rebuildCard(cardElement, cardConfig);
       },
-      { once: true }
+      { once: true },
     );
 
     return cardElement;
@@ -208,7 +207,7 @@ export class TabbedCard extends LitElement {
 
   async _rebuildCard(
     cardElement: LovelaceCard,
-    cardConfig: LovelaceCardConfig
+    cardConfig: LovelaceCardConfig,
   ) {
     console.log("_rebuildCard: ", cardElement, cardConfig);
 
@@ -222,7 +221,7 @@ export class TabbedCard extends LitElement {
 
   async evaluateJinjaTemplate(
     hass: HomeAssistant,
-    template: string
+    template: string,
   ): Promise<any> {
     return new Promise((resolve) => {
       hass.connection.subscribeMessage(
@@ -231,7 +230,7 @@ export class TabbedCard extends LitElement {
         {
           type: "render_template",
           template: template,
-        }
+        },
       );
     });
   }
@@ -253,12 +252,12 @@ export class TabbedCard extends LitElement {
 
     // Find the index of the selected tab in the visible tabs array
     const activeVisibleIndex = visibleTabs.findIndex(
-      ({ index }) => index === this.selectedTabIndex
+      ({ index }) => index === this.selectedTabIndex,
     );
 
     return html`
-      <mwc-tab-bar
-        @MDCTabBar:activated=${(ev: mwcTabBarEvent) => {
+      <md-tabs
+        @change=${(ev: TabsActivatedEvent) => {
           // Map the visible tab index back to the original tab index
           const visibleIndex = ev.detail.index;
           const originalIndex = visibleTabs[visibleIndex].index;
@@ -269,12 +268,11 @@ export class TabbedCard extends LitElement {
           }
         }}
         style=${styleMap(this._styles)}
-        activeIndex=${activeVisibleIndex >= 0 ? activeVisibleIndex : 0}
+        .activeTabIndex=${activeVisibleIndex >= 0 ? activeVisibleIndex : 0}
       >
-        <!-- no horizontal scrollbar shown when tabs overflow in chrome -->
         ${visibleTabs.map(
           ({ tab, index }) => html`
-            <mwc-tab
+            <md-primary-tab
               style=${ifDefined(
                 styleMap({
                   ...(tab?.styles || {}),
@@ -283,19 +281,15 @@ export class TabbedCard extends LitElement {
                     ? {
                         opacity: "0.5",
                         cursor: "not-allowed",
-                        "--mdc-theme-primary":
+                        "--md-sys-color-primary":
                           "var(--disabled-text-color, rgba(var(--rgb-primary-text-color), 0.5))",
                       }
                     : {}),
-                })
+                }),
               )}
-              label="${tab?.attributes?.label || nothing}"
-              ?hasImageIcon=${tab?.attributes?.icon}
-              ?isFadingIndicator=${tab?.attributes?.isFadingIndicator}
-              ?minWidth=${tab?.attributes?.minWidth}
-              ?isMinWidthIndicator=${tab?.attributes?.isMinWidthIndicator}
-              ?stacked=${tab?.attributes?.stacked}
               ?disabled=${this._disabledTabs[index]}
+              ?minWidth=${tab?.attributes?.minWidth}
+              ?stacked=${tab?.attributes?.stacked}
             >
               ${tab?.attributes?.icon
                 ? html`<ha-icon
@@ -303,10 +297,11 @@ export class TabbedCard extends LitElement {
                     icon="${tab?.attributes?.icon}"
                   ></ha-icon>`
                 : html``}
-            </mwc-tab>
-          `
+              <span>${tab?.attributes?.label || nothing}</span>
+            </md-primary-tab>
+          `,
         )}
-      </mwc-tab-bar>
+      </md-tabs>
       <section>
         <article>
           ${this._tabs.find((_, index) => index == this.selectedTabIndex)?.card}

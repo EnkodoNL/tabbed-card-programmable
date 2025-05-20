@@ -8,8 +8,10 @@ A custom card for home assistant that utilizes tabs to segregate individual card
 
 As the original dev kinghat did not respond to my pull request (https://github.com/kinghat/tabbed-card/pull/105) for a long time, I decided to fork and publish this as a separate card.
 
-- Added support for conditional default index of tabs like this:
+- Added support for conditional default index of tabs using Jinja templates
 - Added support for hiding and disabling tabs using the `hide` and `disable` attributes. Both attributes support boolean values or Jinja templates that evaluate to boolean values.
+- Upgraded from deprecated `@material/mwc-tab-bar` and `@material/mwc-tab` to the newer `@material/web` package
+- Removed support for `isFadingIndicator` and `isMinWidthIndicator` attributes (no longer supported by Material Web)
 
 ![Tabbed Card](assets/tabbed-card.png)
 
@@ -29,9 +31,7 @@ styles?:
 attributes?:
   label?: string
   icon?: string
-  isFadingIndicator?: boolean
   minWidth?: boolean
-  isMinWidthIndicator?: boolean
   stacked?: boolean
   hide?: boolean | string # New property
   disable?: boolean | string # New property
@@ -42,9 +42,7 @@ tabs:
     attributes?:
       label?: string
       icon?: string
-      isFadingIndicator?: boolean
       minWidth?: boolean
-      isMinWidthIndicator?: boolean
       stacked?: boolean
 ```
 
@@ -114,36 +112,34 @@ This card tries to closely match home assistants default tab styles. You can ove
 
 Default Custom Properties:
 
-| Name                                 | Default                    | Description                                                                                                                                                    |
-| ------------------------------------ | -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `--mdc-theme-primary`                | `--primary-text-color`     | Color of the activated tab's text, indicator, and ripple.                                                                                                      |
-| `--mdc-tab-text-label-color-default` | `rgba(225, 225, 225, 0.8)` | Color of an unactivated tab label. **_If you want transpareny on the unactivated tabs, you need to use an `rgba` value incorporating the 4th alpha channel._** |
-| `--mdc-typography-button-font-size`  | `14px`                     | Font size of the tab label.                                                                                                                                    |
+| Name                                       | Default                    | Description                                                                                                                                                    |
+| ------------------------------------------ | -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--md-sys-color-primary`                   | `--primary-text-color`     | Color of the activated tab's text, indicator, and ripple.                                                                                                      |
+| `--md-sys-color-on-surface-variant`        | `rgba(225, 225, 225, 0.8)` | Color of an unactivated tab label. **_If you want transpareny on the unactivated tabs, you need to use an `rgba` value incorporating the 4th alpha channel._** |
+| `--md-sys-typescale-label-large-font-size` | `14px`                     | Font size of the tab label.                                                                                                                                    |
 
 ```yaml
 type: custom:tabbed-card-programmable
 styles: # global styles applied to all tabs
-  --mdc-theme-primary: yellow
-  --mdc-tab-text-label-color-default: orange
+  --md-sys-color-primary: yellow
+  --md-sys-color-on-surface-variant: orange
 tabs: ...
 ```
 
 ![Styling](assets/global-styles.png)
 
-See the full list of exposed custom properties: [`<mwc-tab>`](https://github.com/material-components/material-web/blob/mwc/packages/tab/README.md#css-custom-properties)
+See the full list of exposed custom properties: [`<md-tabs>` and `<md-primary-tab>`](https://material-web.dev/components/tabs/)
 
 ### **Attributes**
 
-| Name                  | Default | Description                                                     |
-| --------------------- | ------- | --------------------------------------------------------------- |
-| `label`               | `""`    | Text label to display in tab.                                   |
-| `icon`                | `""`    | Home Assistant `mdi:icon` name.                                 |
-| `isFadingIndicator`   | `false` | Indicator fades in and out instead of sliding.                  |
-| `minWidth`            | `false` | Shrinks tab as narrow as possible without causing text to wrap. |
-| `isMinWidthIndicator` | `false` | Shrinks indicator to be the size of the content.                |
-| `stacked`             | `false` | Stacks icon on top of label text.                               |
-| `hide`                | `false` | Completely removes the tab from the tab bar.                    |
-| `disable`             | `false` | Shows the tab but makes it non-clickable (grayed out).          |
+| Name       | Default | Description                                                     |
+| ---------- | ------- | --------------------------------------------------------------- |
+| `label`    | `""`    | Text label to display in tab.                                   |
+| `icon`     | `""`    | Home Assistant `mdi:icon` name.                                 |
+| `minWidth` | `false` | Shrinks tab as narrow as possible without causing text to wrap. |
+| `stacked`  | `false` | Stacks icon on top of label text.                               |
+| `hide`     | `false` | Completely removes the tab from the tab bar.                    |
+| `disable`  | `false` | Shows the tab but makes it non-clickable (grayed out).          |
 
 Global attributes:
 
