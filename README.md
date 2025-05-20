@@ -6,15 +6,10 @@ A custom card for home assistant that utilizes tabs to segregate individual card
 
 #### Changes from kinghat's version:
 
-Added support for conditional default index of tabs like this:
+As the original dev kinghat did not respond to my pull request (https://github.com/kinghat/tabbed-card/pull/105) for a long time, I decided to fork and publish this as a separate card.
 
-```
-type: custom:tabbed-card-programmable
-options:
-  defaultTabIndex: '{% if now().hour > 17 %}2{% elif now().hour > 12 %}1{% else %}0{% endif %}'
-```
-
-As the original dev kinghat did not respond to my pull request (https://github.com/kinghat/tabbed-card/pull/105) for 4 months, I decided to publish this as a separate card.
+- Added support for conditional default index of tabs like this:
+- Added support for hiding and disabling tabs using the `hide` and `disable` attributes. Both attributes support boolean values or Jinja templates that evaluate to boolean values.
 
 ![Tabbed Card](assets/tabbed-card.png)
 
@@ -38,6 +33,8 @@ attributes?:
   minWidth?: boolean
   isMinWidthIndicator?: boolean
   stacked?: boolean
+  hide?: boolean | string # New property
+  disable?: boolean | string # New property
 tabs:
   - card:
       type:
@@ -100,9 +97,9 @@ You can apply global and per tab configuration to your card. Global configuratio
 
 ### **Options**
 
-| Property          | Default | Description                    |
-| ----------------- | ------- | ------------------------------ |
-| `defaultTabIndex` | `0`     | tab to display on first render |
+| Property          | Default | Description                                               |
+| ----------------- | ------- | --------------------------------------------------------- |
+| `defaultTabIndex` | `0`     | tab to display on first render (0 based, jinja supported) |
 
 ```yaml
 type: custom:tabbed-card-programmable
@@ -145,6 +142,8 @@ See the full list of exposed custom properties: [`<mwc-tab>`](https://github.com
 | `minWidth`            | `false` | Shrinks tab as narrow as possible without causing text to wrap. |
 | `isMinWidthIndicator` | `false` | Shrinks indicator to be the size of the content.                |
 | `stacked`             | `false` | Stacks icon on top of label text.                               |
+| `hide`                | `false` | Completely removes the tab from the tab bar.                    |
+| `disable`             | `false` | Shows the tab but makes it non-clickable (grayed out).          |
 
 Global attributes:
 
@@ -212,6 +211,64 @@ tabs:
 ```
 
 ![Local Attributes](assets/local-attributes.png)
+
+## Hide and Disable Tabs
+
+You can hide or disable tabs using the `hide` and `disable` attributes. Both attributes support boolean values or Jinja templates that evaluate to boolean values.
+
+### Using boolean values:
+
+```yaml
+type: custom:tabbed-card-programmable
+tabs:
+  - attributes:
+      label: Always Visible
+    card:
+      type: entities
+      entities:
+        - light.living_room
+  - attributes:
+      label: Hidden Tab
+      hide: true
+    card:
+      type: entities
+      entities:
+        - light.bedroom
+  - attributes:
+      label: Disabled Tab
+      disable: true
+    card:
+      type: entities
+      entities:
+        - light.kitchen
+```
+
+### Using Jinja templates:
+
+```yaml
+type: custom:tabbed-card-programmable
+tabs:
+  - attributes:
+      label: Always Visible
+    card:
+      type: entities
+      entities:
+        - light.living_room
+  - attributes:
+      label: Hidden at Night
+      hide: "{% if now().hour < 6 or now().hour >= 22 %}true{% else %}false{% endif %}"
+    card:
+      type: entities
+      entities:
+        - light.bedroom
+  - attributes:
+      label: Disabled when Off
+      disable: "{% if is_state('light.kitchen', 'off') %}true{% else %}false{% endif %}"
+    card:
+      type: entities
+      entities:
+        - light.kitchen
+```
 
 ## Appreciation
 

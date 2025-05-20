@@ -3,13 +3,10 @@ import { customElement, state, property } from "lit/decorators.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { ifDefined } from "lit/directives/if-defined.js";
 import {
-  getLovelace,
-  hasConfigOrEntityChanged,
   HomeAssistant,
   LovelaceCard,
   LovelaceCardConfig,
   LovelaceCardEditor,
-  LovelaceConfig,
 } from "custom-card-helpers";
 import "./registry-patch.ts";
 import "./tabbed-card-editor";
@@ -42,6 +39,8 @@ interface Tab {
     minWidth?: boolean;
     isMinWidthIndicator?: boolean;
     stacked?: boolean;
+    hide?: boolean | string; // Option to hide the tab
+    disable?: boolean | string; // Option to disable the tab
   };
   card: LovelaceCardConfig;
 }
@@ -54,6 +53,8 @@ export class TabbedCard extends LitElement {
 
   @state() private _config!: TabbedCardConfig;
   @state() private _tabs!: Tab[];
+  @state() private _hiddenTabs: boolean[] = [];
+  @state() private _disabledTabs: boolean[] = [];
   @property() protected _styles = {
     "--mdc-theme-primary": "var(--primary-text-color)", // Color of the activated tab's text, indicator, and ripple.
     "--mdc-tab-text-label-color-default":
@@ -73,7 +74,12 @@ export class TabbedCard extends LitElement {
   static getStubConfig() {
     return {
       options: {},
-      tabs: [{ card: { type: "entity", entity: "sun.sun" }, attributes: { label: "Sun" } }],
+      tabs: [
+        {
+          card: { type: "entity", entity: "sun.sun" },
+          attributes: { label: "Sun" },
+        },
+      ],
     };
   }
 
@@ -93,7 +99,7 @@ export class TabbedCard extends LitElement {
   }
 
   protected willUpdate(
-    _changedProperties: PropertyValueMap<any> | Map<PropertyKey, unknown>,
+    _changedProperties: PropertyValueMap<any> | Map<PropertyKey, unknown>
   ): void {
     if (_changedProperties.has("_helpers")) {
       this._createTabs(this._config);
@@ -108,23 +114,79 @@ export class TabbedCard extends LitElement {
     if (typeof template === "undefined") {
       this.selectedTabIndex = 0;
     } else if (typeof template === "string") {
-      let result = await this.evaluateJinjaTemplate(this.hass, template || "0")
+      let result = await this.evaluateJinjaTemplate(this.hass, template || "0");
       // Try to parse the result as a number, if it fails, default to 0 (first tab)
       this.selectedTabIndex = parseInt(result) || 0;
     } else {
-      this.selectedTabIndex = isFinite(template)? template : 0;
+      this.selectedTabIndex = isFinite(template) ? template : 0;
     }
+
+    // Initialize arrays to track hidden and disabled states
+    this._hiddenTabs = [];
+    this._disabledTabs = [];
+
     const tabs = await Promise.all(
       config.tabs.map(async (tab) => {
+        // Check if tab should be hidden
+        let hideTab = false;
+        if (tab.attributes?.hide !== undefined) {
+          if (typeof tab.attributes.hide === "string") {
+            // Evaluate Jinja template
+            const hideResult = await this.evaluateJinjaTemplate(
+              this.hass,
+              tab.attributes.hide
+            );
+            hideTab = hideResult.toLowerCase() === "true";
+          } else {
+            hideTab = !!tab.attributes.hide;
+          }
+        }
+        this._hiddenTabs.push(hideTab);
+
+        // Check if tab should be disabled
+        let disableTab = false;
+        if (tab.attributes?.disable !== undefined) {
+          if (typeof tab.attributes.disable === "string") {
+            // Evaluate Jinja template
+            const disableResult = await this.evaluateJinjaTemplate(
+              this.hass,
+              tab.attributes.disable
+            );
+            disableTab = disableResult.toLowerCase() === "true";
+          } else {
+            disableTab = !!tab.attributes.disable;
+          }
+        }
+        this._disabledTabs.push(disableTab);
+
+        // Create tab (even if hidden)
         return {
           styles: tab?.styles,
           attributes: { ...config?.attributes, ...tab?.attributes },
           card: await this._createCard(tab.card),
         };
-      }),
+      })
     );
 
     this._tabs = tabs;
+
+    // If the selected tab is hidden, find the first visible tab
+    if (this._hiddenTabs[this.selectedTabIndex]) {
+      const visibleTabIndex = this._hiddenTabs.findIndex((hidden) => !hidden);
+      if (visibleTabIndex >= 0) {
+        this.selectedTabIndex = visibleTabIndex;
+      }
+    }
+
+    // If the selected tab is disabled, find the first non-disabled and visible tab
+    if (this._disabledTabs[this.selectedTabIndex]) {
+      for (let i = 0; i < this._tabs.length; i++) {
+        if (!this._hiddenTabs[i] && !this._disabledTabs[i]) {
+          this.selectedTabIndex = i;
+          break;
+        }
+      }
+    }
   }
 
   async _createCard(cardConfig: LovelaceCardConfig) {
@@ -138,7 +200,7 @@ export class TabbedCard extends LitElement {
         ev.stopPropagation();
         this._rebuildCard(cardElement, cardConfig);
       },
-      { once: true },
+      { once: true }
     );
 
     return cardElement;
@@ -146,7 +208,7 @@ export class TabbedCard extends LitElement {
 
   async _rebuildCard(
     cardElement: LovelaceCard,
-    cardConfig: LovelaceCardConfig,
+    cardConfig: LovelaceCardConfig
   ) {
     console.log("_rebuildCard: ", cardElement, cardConfig);
 
@@ -159,14 +221,18 @@ export class TabbedCard extends LitElement {
   }
 
   async evaluateJinjaTemplate(
-      hass: HomeAssistant,
-      template: string,
+    hass: HomeAssistant,
+    template: string
   ): Promise<any> {
-    return new Promise(resolve => {
-      hass.connection.subscribeMessage((msg: { result: string | Record<string, unknown> }) => resolve(msg.result.toString()), {
-        type: "render_template",
-        template: template,
-      });
+    return new Promise((resolve) => {
+      hass.connection.subscribeMessage(
+        (msg: { result: string | Record<string, unknown> }) =>
+          resolve(msg.result.toString()),
+        {
+          type: "render_template",
+          template: template,
+        }
+      );
     });
   }
 
@@ -175,34 +241,70 @@ export class TabbedCard extends LitElement {
       return html``;
     }
 
+    // Filter visible tabs for rendering, but maintain original indices
+    const visibleTabs = this._tabs
+      .map((tab, index) => ({ tab, index }))
+      .filter(({ index }) => !this._hiddenTabs[index]);
+
+    // If no visible tabs, return empty
+    if (visibleTabs.length === 0) {
+      return html``;
+    }
+
+    // Find the index of the selected tab in the visible tabs array
+    const activeVisibleIndex = visibleTabs.findIndex(
+      ({ index }) => index === this.selectedTabIndex
+    );
+
     return html`
       <mwc-tab-bar
-        @MDCTabBar:activated=${(ev: mwcTabBarEvent) =>
-        (this.selectedTabIndex = ev.detail.index)}
+        @MDCTabBar:activated=${(ev: mwcTabBarEvent) => {
+          // Map the visible tab index back to the original tab index
+          const visibleIndex = ev.detail.index;
+          const originalIndex = visibleTabs[visibleIndex].index;
+
+          // Only update selectedTabIndex if the tab is not disabled
+          if (!this._disabledTabs[originalIndex]) {
+            this.selectedTabIndex = originalIndex;
+          }
+        }}
         style=${styleMap(this._styles)}
-        activeIndex=${this.selectedTabIndex}
+        activeIndex=${activeVisibleIndex >= 0 ? activeVisibleIndex : 0}
       >
         <!-- no horizontal scrollbar shown when tabs overflow in chrome -->
-        ${this._tabs.map(
-          (tab) =>
-            html`
-              <mwc-tab
-                style=${ifDefined(styleMap(tab?.styles || {}))}
-                label="${tab?.attributes?.label || nothing}"
-                ?hasImageIcon=${tab?.attributes?.icon}
-                ?isFadingIndicator=${tab?.attributes?.isFadingIndicator}
-                ?minWidth=${tab?.attributes?.minWidth}
-                ?isMinWidthIndicator=${tab?.attributes?.isMinWidthIndicator}
-                ?stacked=${tab?.attributes?.stacked}
-              >
-                ${tab?.attributes?.icon
+        ${visibleTabs.map(
+          ({ tab, index }) => html`
+            <mwc-tab
+              style=${ifDefined(
+                styleMap({
+                  ...(tab?.styles || {}),
+                  // Add styling for disabled tabs
+                  ...(this._disabledTabs[index]
+                    ? {
+                        opacity: "0.5",
+                        cursor: "not-allowed",
+                        "--mdc-theme-primary":
+                          "var(--disabled-text-color, rgba(var(--rgb-primary-text-color), 0.5))",
+                      }
+                    : {}),
+                })
+              )}
+              label="${tab?.attributes?.label || nothing}"
+              ?hasImageIcon=${tab?.attributes?.icon}
+              ?isFadingIndicator=${tab?.attributes?.isFadingIndicator}
+              ?minWidth=${tab?.attributes?.minWidth}
+              ?isMinWidthIndicator=${tab?.attributes?.isMinWidthIndicator}
+              ?stacked=${tab?.attributes?.stacked}
+              ?disabled=${this._disabledTabs[index]}
+            >
+              ${tab?.attributes?.icon
                 ? html`<ha-icon
-                      slot="icon"
-                      icon="${tab?.attributes?.icon}"
-                    ></ha-icon>`
+                    slot="icon"
+                    icon="${tab?.attributes?.icon}"
+                  ></ha-icon>`
                 : html``}
-              </mwc-tab>
-            `,
+            </mwc-tab>
+          `
         )}
       </mwc-tab-bar>
       <section>
