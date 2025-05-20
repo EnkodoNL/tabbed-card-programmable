@@ -293,9 +293,11 @@ export class TabbedCard extends LitElement {
     );
 
     return html`
-      <md-tabs @change=${this._onTabChange}>
+      <md-tabs
+        @change=${this._onTabChange}
         style=${styleMap(this._styles)}
-        .activeTabIndex=${activeVisibleIndex >= 0 ? activeVisibleIndex : 0} >
+        .activeTabIndex=${activeVisibleIndex >= 0 ? activeVisibleIndex : 0}
+      >
         ${visibleTabs.map(
           ({ tab, index }) => html`
             <md-primary-tab
