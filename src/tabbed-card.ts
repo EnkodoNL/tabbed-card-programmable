@@ -14,12 +14,6 @@ import "@material/web/tabs/tabs.js";
 import "@material/web/tabs/primary-tab.js";
 import "@material/web/icon/icon.js";
 
-interface TabsActivatedEvent extends Event {
-  detail: {
-    index: number;
-  };
-}
-
 interface TabbedCardConfig extends LovelaceCardConfig {
   options?: options;
   styles?: object;
@@ -267,6 +261,17 @@ export class TabbedCard extends LitElement {
     });
   }
 
+  private _onTabChange(ev: Event) {
+    this.selectedTabIndex = (ev.target as any).activeTabIndex;
+    this.dispatchEvent(
+      new CustomEvent("tabbed-card-change", {
+        detail: { index: this.selectedTabIndex },
+        bubbles: true,
+        composed: true,
+      }),
+    );
+  }
+
   render() {
     if (!this.hass || !this._config || !this._helpers || !this._tabs?.length) {
       return html``;
@@ -288,60 +293,9 @@ export class TabbedCard extends LitElement {
     );
 
     return html`
-      <md-tabs
-        @change=${(ev: TabsActivatedEvent) => {
-          try {
-            // Safely access the event detail
-            if (!ev || !ev.detail) {
-              console.warn(
-                "[tabbed-card-programmable] Invalid change event:",
-                ev,
-              );
-              return;
-            }
-
-            // Map the visible tab index back to the original tab index
-            const visibleIndex = ev.detail.index;
-
-            // Check if the index is valid
-            if (
-              visibleIndex === undefined ||
-              visibleIndex === null ||
-              visibleIndex < 0 ||
-              visibleIndex >= visibleTabs.length
-            ) {
-              console.warn(
-                `[tabbed-card-programmable] Invalid tab index: ${visibleIndex}`,
-              );
-              return;
-            }
-
-            // Safely access the visible tab
-            const visibleTab = visibleTabs[visibleIndex];
-            if (!visibleTab || typeof visibleTab.index !== "number") {
-              console.warn(
-                `[tabbed-card-programmable] Invalid visible tab at index ${visibleIndex}:`,
-                visibleTab,
-              );
-              return;
-            }
-
-            const originalIndex = visibleTab.index;
-
-            // Only update selectedTabIndex if the tab is not disabled
-            if (!this._disabledTabs[originalIndex]) {
-              this.selectedTabIndex = originalIndex;
-            }
-          } catch (error) {
-            console.error(
-              "[tabbed-card-programmable] Error in tab change handler:",
-              error,
-            );
-          }
-        }}
+      <md-tabs @change=${this._onTabChange}>
         style=${styleMap(this._styles)}
-        .activeTabIndex=${activeVisibleIndex >= 0 ? activeVisibleIndex : 0}
-      >
+        .activeTabIndex=${activeVisibleIndex >= 0 ? activeVisibleIndex : 0} >
         ${visibleTabs.map(
           ({ tab, index }) => html`
             <md-primary-tab
