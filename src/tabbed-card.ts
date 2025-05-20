@@ -54,13 +54,7 @@ export class TabbedCard extends LitElement {
   @state() private _hiddenTabs: boolean[] = [];
   @state() private _disabledTabs: boolean[] = [];
   @state() private _processedLabels: string[] = [];
-  @property() protected _styles = {
-    "--md-sys-color-primary": "var(--primary-text-color)", // Color of the activated tab's text, indicator, and ripple.
-    "--md-sys-color-on-surface-variant":
-      "rgba(var(--rgb-primary-text-color), 0.8)", // Color of an unactivated tab label.
-    "--md-sys-color-on-surface": "rgba(var(--rgb-primary-text-color), 0.7)", // Color of an unactivated icon.
-    "--md-sys-typescale-label-large-font-size": "14px",
-  };
+  @property() protected _styles = {};
 
   private async loadCardHelpers() {
     this._helpers = await (window as any).loadCardHelpers();
@@ -309,8 +303,6 @@ export class TabbedCard extends LitElement {
                     ? {
                         opacity: "0.5",
                         cursor: "not-allowed",
-                        "--md-sys-color-primary":
-                          "var(--disabled-text-color, rgba(var(--rgb-primary-text-color), 0.5))",
                       }
                     : {}),
                 }),

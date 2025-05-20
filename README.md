@@ -124,11 +124,12 @@ This card tries to closely match home assistants default tab styles. You can ove
 
 Default Custom Properties:
 
-| Name                                       | Default                    | Description                                                                                                                                                    |
-| ------------------------------------------ | -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `--md-sys-color-primary`                   | `--primary-text-color`     | Color of the activated tab's text, indicator, and ripple.                                                                                                      |
-| `--md-sys-color-on-surface-variant`        | `rgba(225, 225, 225, 0.8)` | Color of an unactivated tab label. **_If you want transpareny on the unactivated tabs, you need to use an `rgba` value incorporating the 4th alpha channel._** |
-| `--md-sys-typescale-label-large-font-size` | `14px`                     | Font size of the tab label.                                                                                                                                    |
+| Name                                | Default          | Description                                                                                                                                                    |
+| ----------------------------------- | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--md-sys-color-primary`            | `system-default` | Color of the activated tab's text, indicator, and ripple.                                                                                                      |
+| `--md-sys-color-on-surface`         | `system-default` | Color of the unactivated tab's text.                                                                                                                           |
+| `--md-sys-color-on-surface-variant` | `system-default` | Color of an unactivated tab label. **_If you want transpareny on the unactivated tabs, you need to use an `rgba` value incorporating the 4th alpha channel._** |
+| `--md-primary-tab-label-text-size`  | `system-default` | Font size of the tab label.                                                                                                                                    |
 
 ```yaml
 type: custom:tabbed-card-programmable
