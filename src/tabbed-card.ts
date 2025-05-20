@@ -10,9 +10,6 @@ import {
 } from "custom-card-helpers";
 import "./registry-patch.ts";
 import "./tabbed-card-editor";
-import "@material/web/tabs/tabs.js";
-import "@material/web/tabs/primary-tab.js";
-import "@material/web/icon/icon.js";
 
 interface TabsActivatedEvent extends Event {
   detail: {
@@ -22,8 +19,8 @@ interface TabsActivatedEvent extends Event {
 
 interface TabbedCardConfig extends LovelaceCardConfig {
   options?: options;
-  styles?: {};
-  attributes?: {};
+  styles?: object;
+  attributes?: object;
   tabs: Tab[];
 }
 
@@ -32,7 +29,7 @@ interface options {
 }
 
 interface Tab {
-  styles?: {};
+  styles?: object;
   attributes?: {
     label?: string;
     icon?: string;
@@ -109,11 +106,14 @@ export class TabbedCard extends LitElement {
   }
 
   async _createTabs(config: TabbedCardConfig) {
-    let template = config?.options?.defaultTabIndex;
+    const template = config?.options?.defaultTabIndex;
     if (typeof template === "undefined") {
       this.selectedTabIndex = 0;
     } else if (typeof template === "string") {
-      let result = await this.evaluateJinjaTemplate(this.hass, template || "0");
+      const result = await this.evaluateJinjaTemplate(
+        this.hass,
+        template || "0",
+      );
       // Try to parse the result as a number, if it fails, default to 0 (first tab)
       this.selectedTabIndex = parseInt(result) || 0;
     } else {
