@@ -1,10 +1,10 @@
 # Tabbed Card Programmable
 
-A custom card for home assistant that utilizes tabs to segregate individual cards. Based on the [Tabbed Card](https://github.com/kinghat/tabbed-card) by kinghat.
+A custom card for home assistant that utilizes tabs to segregate individual cards. Fork of [Tabbed Card](https://github.com/kinghat/tabbed-card) by kinghat.
 
-![Tabbed Card](assets/tabbed-card.png)
+![Tabbed Card Programmable](assets/tabbed-card-programmable.png)
 
-## Changes from kinghat's version:
+## All changes from kinghat's version (forked from v0.3.1):
 
 As the original dev kinghat did not respond to my pull request (https://github.com/kinghat/tabbed-card/pull/105) for a long time, I decided to fork and publish this as a separate card.
 
@@ -16,10 +16,6 @@ Needed some features for my own use case, so I added them to this fork:
 - Added support for dynamic tab labels using Jinja templates
 - Upgraded from deprecated `@material/mwc-tab-bar` and `@material/mwc-tab` to the newer `@material/web` package
 - Removed support for `isFadingIndicator` and `isMinWidthIndicator` attributes (no longer supported by Material Web)
-
-### v0.3.5 - 2025-05-14
-
-- Backported a fix for HA 2025.5.0+
 
 ### v0.3.4 - 2023-10-24
 

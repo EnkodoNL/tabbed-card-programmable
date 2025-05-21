@@ -201,13 +201,7 @@ export class TabbedCardEditor extends LitElement implements LovelaceCardEditor {
           ${tab.card?.type
             ? html`
                 <div class="card-options">
-                  <hui-card-editor
-                    .hass=${this.hass}
-                    .value=${tab.card}
-                    .lovelace=${(window as any).lovelace}
-                    @config-changed=${(e: CustomEvent) =>
-                      this._cardConfigChanged(e, index)}
-                  ></hui-card-editor>
+                  ${this._renderCardEditor(tab.card, index)}
                 </div>
               `
             : ""}
@@ -321,7 +315,94 @@ export class TabbedCardEditor extends LitElement implements LovelaceCardEditor {
     const tabs = [...this._config.tabs];
     const tab = { ...tabs[tabIndex] };
 
-    tab.card = { type: cardType };
+    // Preserve existing card configuration if possible
+    const existingCard = tab.card || {};
+
+    // Special handling for specific card types
+    if (cardType === "markdown" && existingCard.type === "markdown") {
+      // Preserve markdown content
+      tab.card = {
+        ...existingCard,
+        type: cardType,
+      };
+    } else {
+      // For other card types or type changes, create a default configuration
+      // but try to preserve some common properties
+      const newCard: any = { type: cardType };
+
+      // Preserve entity if it exists and makes sense for the new card type
+      if (
+        existingCard.entity &&
+        ["entity", "button", "gauge", "sensor"].includes(cardType)
+      ) {
+        newCard.entity = existingCard.entity;
+      }
+
+      // Preserve entities array if it exists and makes sense for the new card type
+      if (
+        existingCard.entities &&
+        ["entities", "glance", "history-graph"].includes(cardType)
+      ) {
+        newCard.entities = existingCard.entities;
+      }
+
+      // Preserve title if it exists
+      if (existingCard.title) {
+        newCard.title = existingCard.title;
+      }
+
+      tab.card = newCard;
+    }
+
+    tabs[tabIndex] = tab;
+
+    this._updateConfig({ ...this._config, tabs });
+  }
+
+  private _renderCardEditor(cardConfig: any, tabIndex: number): TemplateResult {
+    if (!cardConfig || !cardConfig.type) {
+      return html``;
+    }
+
+    // Special handling for markdown card
+    if (cardConfig.type === "markdown") {
+      return html`
+        <div class="markdown-editor">
+          <ha-textarea
+            label="Markdown Content"
+            .value=${cardConfig.content || ""}
+            .configValue=${"content"}
+            @input=${(e: Event) => this._markdownContentChanged(e, tabIndex)}
+            rows="8"
+          ></ha-textarea>
+        </div>
+      `;
+    }
+
+    // Default to standard card editor
+    return html`
+      <hui-card-editor
+        .hass=${this.hass}
+        .value=${cardConfig}
+        .lovelace=${(window as any).lovelace}
+        @config-changed=${(e: CustomEvent) =>
+          this._cardConfigChanged(e, tabIndex)}
+      ></hui-card-editor>
+    `;
+  }
+
+  private _markdownContentChanged(e: Event, tabIndex: number): void {
+    if (!this._config || !this.hass || !this._config.tabs) return;
+
+    const target = e.target as HTMLTextAreaElement;
+    const content = target.value;
+
+    const tabs = [...this._config.tabs];
+    const tab = { ...tabs[tabIndex] };
+    const card = { ...tab.card };
+
+    card.content = content;
+    tab.card = card;
     tabs[tabIndex] = tab;
 
     this._updateConfig({ ...this._config, tabs });
@@ -428,6 +509,14 @@ export class TabbedCardEditor extends LitElement implements LovelaceCardEditor {
       border: 1px solid var(--divider-color);
       padding: 16px;
       border-radius: 4px;
+    }
+
+    .markdown-editor {
+      width: 100%;
+    }
+
+    ha-textarea {
+      width: 100%;
     }
   `;
 }
