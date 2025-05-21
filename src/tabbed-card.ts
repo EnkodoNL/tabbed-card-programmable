@@ -301,8 +301,7 @@ export class TabbedCard extends LitElement {
                 }),
               )}
               ?disabled=${this._disabledTabs[index]}
-              ?inline-icon=${tab?.attributes?.inlineIcon ||
-              tab?.attributes?.stacked}
+              ?inline-icon=${!tab?.attributes?.stacked}
             >
               ${tab?.attributes?.icon
                 ? html`<ha-icon

@@ -156,11 +156,10 @@ export class TabbedCardEditor extends LitElement implements LovelaceCardEditor {
           helper-text="Material Design icon (e.g., mdi:home)"
         ></ha-textfield>
 
-        <ha-formfield label="Inline Icon (Side by Side)">
+        <ha-formfield label="Stacked Icon (Vertical)">
           <ha-switch
-            .checked=${attributes.inlineIcon === true ||
-            attributes.stacked === true}
-            .configValue=${"inlineIcon"}
+            .checked=${attributes.stacked === true}
+            .configValue=${"stacked"}
             @change=${(e: Event) => this._valueChangedTabAttribute(e, index)}
           ></ha-switch>
         </ha-formfield>
@@ -291,24 +290,8 @@ export class TabbedCardEditor extends LitElement implements LovelaceCardEditor {
 
     if (value === "" || value === false) {
       delete attributes[configValue];
-
-      // Special handling for inlineIcon/stacked for backward compatibility
-      if (configValue === "inlineIcon") {
-        delete attributes["stacked"];
-      } else if (configValue === "stacked") {
-        delete attributes["inlineIcon"];
-      }
     } else {
       attributes[configValue] = value;
-
-      // Special handling for inlineIcon/stacked for backward compatibility
-      if (configValue === "inlineIcon") {
-        attributes["stacked"] =
-          typeof value === "boolean" ? value : Boolean(value);
-      } else if (configValue === "stacked") {
-        attributes["inlineIcon"] =
-          typeof value === "boolean" ? value : Boolean(value);
-      }
     }
 
     tab.attributes = attributes;

@@ -37,8 +37,7 @@ export interface TabConfig {
   attributes?: {
     label?: string;
     icon?: string;
-    inlineIcon?: boolean;
-    stacked?: boolean; // Keep for backward compatibility
+    stacked?: boolean;
     hide?: boolean | string;
     disable?: boolean | string;
     [key: string]: any;
