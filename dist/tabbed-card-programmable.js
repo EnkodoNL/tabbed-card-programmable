@@ -155,8 +155,7 @@
         <ha-formfield label="Stacked Icon (Vertical)">
           <ha-switch
             .checked=${e.stacked===!0}
-            .configValue=${"stacked"}
-            @change=${s=>this._valueChangedTabAttribute(s,t)}
+            @change=${s=>{if(!this._config||!this._config.tabs)return;const o=s.target.checked,a=[...this._config.tabs],n={...a[t]},l={...n.attributes||{}};l.stacked=o,n.attributes=l,a[t]=n,this._updateConfig({...this._config,tabs:a})}}
           ></ha-switch>
         </ha-formfield>
 
@@ -181,12 +180,15 @@
         <div class="card-picker">
           <div class="card-options">
             <div class="code-editor">
-              <ha-textarea
-                label="Card Configuration (YAML or JSON)"
-                .value=${this._cardConfigToYaml(r.card||{})}
-                @input=${s=>this._handleYamlChanged(s,t)}
-                rows="12"
-              ></ha-textarea>
+              <div class="textarea-container">
+                <label>Card Configuration (YAML or JSON)</label>
+                <textarea
+                  .value=${this._cardConfigToYaml(r.card||{})}
+                  @input=${s=>this._handleYamlChanged(s,t)}
+                  rows="12"
+                  style="width: 100%; min-height: 200px;"
+                ></textarea>
+              </div>
               <div class="editor-actions">
                 <mwc-button @click=${()=>this._validateYaml()}>
                   Validate
@@ -282,12 +284,26 @@
     }
 
     .markdown-editor,
-    .code-editor {
+    .code-editor,
+    .textarea-container {
       width: 100%;
     }
 
-    ha-textarea {
+    .textarea-container label {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--primary-text-color);
+    }
+
+    .textarea-container textarea {
       width: 100%;
+      min-height: 200px;
+      padding: 8px;
+      border: 1px solid var(--divider-color);
+      border-radius: 4px;
+      background-color: var(--card-background-color, #fff);
+      color: var(--primary-text-color);
+      font-family: monospace;
     }
 
     .editor-actions {
