@@ -1,8 +1,6 @@
 # Tabbed Card Programmable
 
-#### based on kinghat's [Tabbed Card](https://github.com/kinghat/tabbed-card)
-
-A custom card for home assistant that utilizes tabs to segregate individual cards.
+A custom card for home assistant that utilizes tabs to segregate individual cards. Based on the [Tabbed Card](https://github.com/kinghat/tabbed-card) by kinghat.
 
 ![Tabbed Card](assets/tabbed-card.png)
 
@@ -124,12 +122,17 @@ This card tries to closely match home assistants default tab styles. You can ove
 
 Default Custom Properties:
 
-| Name                                | Default          | Description                                                                                                                                                    |
-| ----------------------------------- | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `--md-sys-color-primary`            | `system-default` | Color of the activated tab's text, indicator, and ripple.                                                                                                      |
-| `--md-sys-color-on-surface`         | `system-default` | Color of the unactivated tab's text.                                                                                                                           |
-| `--md-sys-color-on-surface-variant` | `system-default` | Color of an unactivated tab label. **_If you want transpareny on the unactivated tabs, you need to use an `rgba` value incorporating the 4th alpha channel._** |
-| `--md-primary-tab-label-text-size`  | `system-default` | Font size of the tab label.                                                                                                                                    |
+| Name                                             | Defaults (All from current HA-theme)       | Description                                 |
+| ------------------------------------------------ | ------------------------------------------ | ------------------------------------------- |
+| `--md-sys-color-primary`                         | 'var(--primary-text-color)'                | Color of the active tab's background.       |
+| `--md-sys-color-on-surface-variant`              | 'rgba(var(--rgb-primary-text-color), 0.6)' | Color of the inactive tab's background.     |
+| `--md-primary-tab-container-color`               | 'transparent'                              | Background color of the tab container.      |
+| `--md-primary-tab-label-text-font`               | 'var(--app-font-family)'                   | Font family for tab labels.                 |
+| `--md-primary-tab-active-indicator-color`        | 'var(--primary-text-color)'                | Color of the active tab indicator.          |
+| `--md-primary-tab-icon-color`                    | 'rgba(var(--rgb-primary-text-color), 0.6)' | Color of the tab icon.                      |
+| `--md-primary-tab-active-focus-icon-color`       | 'var(--primary-text-color)'                | Color of the active focused tab icon.       |
+| `--md-primary-tab-active-focus-label-text-color` | 'var(--primary-text-color)'                | Color of the active focused tab label text. |
+| `--md-primary-tab-label-text-size`               | 'var(--ha-font-size-m)'                    | Font size for tab labels.                   |
 
 ```yaml
 type: custom:tabbed-card-programmable

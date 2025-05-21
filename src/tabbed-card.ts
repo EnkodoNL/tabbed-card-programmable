@@ -54,7 +54,19 @@ export class TabbedCard extends LitElement {
   @state() private _hiddenTabs: boolean[] = [];
   @state() private _disabledTabs: boolean[] = [];
   @state() private _processedLabels: string[] = [];
-  @property() protected _styles = {};
+  @property() protected _styles = {
+    "--md-sys-color-primary": "var(--primary-text-color)",
+    "--md-sys-color-on-surface-variant":
+      "rgba(var(--rgb-primary-text-color), 0.6)",
+    "--md-primary-tab-container-color": "transparent",
+    "--md-primary-tab-label-text-font": "var(--app-font-family)",
+    "--md-primary-tab-active-indicator-color": "var(--primary-text-color)",
+    "--md-primary-tab-icon-color": "rgba(var(--rgb-primary-text-color), 0.6)",
+    "--md-primary-tab-active-focus-icon-color": "var(--primary-text-color)",
+    "--md-primary-tab-active-focus-label-text-color":
+      "var(--primary-text-color)",
+    "--md-primary-tab-label-text-size": "var(--ha-font-size-m)",
+  };
 
   private async loadCardHelpers() {
     this._helpers = await (window as any).loadCardHelpers();
@@ -256,6 +268,11 @@ export class TabbedCard extends LitElement {
   }
 
   private _onTabChange(ev: Event) {
+    const newTabIndex = (ev.target as any).activeTabIndex;
+    if (this._disabledTabs[newTabIndex]) {
+      // If the new tab is disabled, do not change the selected tab
+      return;
+    }
     this.selectedTabIndex = (ev.target as any).activeTabIndex;
     this.dispatchEvent(
       new CustomEvent("tabbed-card-change", {
@@ -303,6 +320,8 @@ export class TabbedCard extends LitElement {
                     ? {
                         opacity: "0.5",
                         cursor: "not-allowed",
+                        "--md-sys-color-primary":
+                          "var(--disabled-text-color, rgba(var(--rgb-primary-text-color), 0.5))",
                       }
                     : {}),
                 }),
