@@ -191,26 +191,21 @@ export class TabbedCardEditor extends LitElement implements LovelaceCardEditor {
 
         <h4>Card Configuration</h4>
         <div class="card-picker">
-          <div class="card-type-selector">
-            <ha-select
-              label="Card Type"
-              .value=${tab.card?.type || ""}
-              @selected=${(e: CustomEvent) => this._cardTypeSelected(e, index)}
-            >
-              ${this._getCardTypes().map(
-                (type) =>
-                  html`<mwc-list-item .value=${type}>${type}</mwc-list-item>`,
-              )}
-            </ha-select>
+          <div class="card-options">
+            <div class="code-editor">
+              <ha-textarea
+                label="Card Configuration (YAML or JSON)"
+                .value=${this._cardConfigToYaml(tab.card || {})}
+                @input=${(e: Event) => this._handleYamlChanged(e, index)}
+                rows="12"
+              ></ha-textarea>
+              <div class="editor-actions">
+                <mwc-button @click=${() => this._validateYaml()}>
+                  Validate
+                </mwc-button>
+              </div>
+            </div>
           </div>
-
-          ${tab.card?.type
-            ? html`
-                <div class="card-options">
-                  ${this._renderCardEditor(tab.card, index)}
-                </div>
-              `
-            : ""}
         </div>
       </div>
     `;
@@ -313,164 +308,53 @@ export class TabbedCardEditor extends LitElement implements LovelaceCardEditor {
     this._updateConfig({ ...this._config, tabs });
   }
 
-  private _getCardTypes(): string[] {
-    // List of common card types
-    return [
-      "entities",
-      "markdown",
-      "button",
-      "gauge",
-      "glance",
-      "history-graph",
-      "horizontal-stack",
-      "vertical-stack",
-      "light",
-      "map",
-      "picture",
-      "picture-elements",
-      "picture-entity",
-      "picture-glance",
-      "sensor",
-      "thermostat",
-      "weather-forecast",
-      "conditional",
-      "entity",
-      "grid",
-      "humidifier",
-      "logbook",
-      "media-control",
-      "statistic",
-      "statistics-graph",
-      "tile",
-    ];
-  }
+  // Card configuration is now always edited as YAML/JSON
 
-  private _cardTypeSelected(e: CustomEvent, tabIndex: number): void {
-    if (!this._config || !this.hass || !this._config.tabs) return;
+  private _cardConfigToYaml(cardConfig: any): string {
+    // Remove circular references and convert to YAML
+    const cleanConfig = { ...cardConfig };
 
-    const select = e.target as HTMLSelectElement;
-    const cardType = select.value;
+    // Remove hass and other non-serializable properties
+    delete cleanConfig.hass;
+    delete cleanConfig._helpers;
 
-    this._cardTypeChanged(
-      { detail: { value: cardType } } as CustomEvent,
-      tabIndex,
-    );
-  }
-
-  private _cardTypeChanged(e: CustomEvent, tabIndex: number): void {
-    if (!this._config || !this.hass || !this._config.tabs) return;
-
-    const cardType = e.detail.value;
-
-    const tabs = [...this._config.tabs];
-    const tab = { ...tabs[tabIndex] };
-
-    // Preserve existing card configuration if possible
-    const existingCard = tab.card || {};
-
-    // Special handling for specific card types
-    if (cardType === "markdown" && existingCard.type === "markdown") {
-      // Preserve markdown content
-      tab.card = {
-        ...existingCard,
-        type: cardType,
-      };
-    } else {
-      // For other card types or type changes, create a default configuration
-      // but try to preserve some common properties
-      const newCard: any = { type: cardType };
-
-      // Preserve entity if it exists and makes sense for the new card type
-      if (
-        existingCard.entity &&
-        ["entity", "button", "gauge", "sensor"].includes(cardType)
-      ) {
-        newCard.entity = existingCard.entity;
-      }
-
-      // Preserve entities array if it exists and makes sense for the new card type
-      if (
-        existingCard.entities &&
-        ["entities", "glance", "history-graph"].includes(cardType)
-      ) {
-        newCard.entities = existingCard.entities;
-      }
-
-      // Preserve title if it exists
-      if (existingCard.title) {
-        newCard.title = existingCard.title;
-      }
-
-      tab.card = newCard;
+    try {
+      return JSON.stringify(cleanConfig, null, 2);
+    } catch (e) {
+      return `# Error converting to YAML: ${e}\n# Please edit manually`;
     }
-
-    tabs[tabIndex] = tab;
-
-    this._updateConfig({ ...this._config, tabs });
   }
 
-  private _renderCardEditor(cardConfig: any, tabIndex: number): TemplateResult {
-    if (!cardConfig || !cardConfig.type) {
-      return html``;
-    }
-
-    // Special handling for markdown card
-    if (cardConfig.type === "markdown") {
-      return html`
-        <div class="markdown-editor">
-          <ha-textarea
-            label="Markdown Content"
-            .value=${cardConfig.content || ""}
-            .configValue=${"content"}
-            @input=${(e: Event) => this._markdownContentChanged(e, tabIndex)}
-            rows="8"
-          ></ha-textarea>
-        </div>
-      `;
-    }
-
-    // Default to standard card editor
-    return html`
-      <hui-card-editor
-        .hass=${this.hass}
-        .value=${cardConfig}
-        .lovelace=${(window as any).lovelace}
-        @config-changed=${(e: CustomEvent) =>
-          this._cardConfigChanged(e, tabIndex)}
-      ></hui-card-editor>
-    `;
-  }
-
-  private _markdownContentChanged(e: Event, tabIndex: number): void {
+  private _handleYamlChanged(e: Event, tabIndex: number): void {
     if (!this._config || !this.hass || !this._config.tabs) return;
 
     const target = e.target as HTMLTextAreaElement;
-    const content = target.value;
+    const yaml = target.value;
 
-    const tabs = [...this._config.tabs];
-    const tab = { ...tabs[tabIndex] };
-    const card = { ...tab.card };
+    try {
+      const cardConfig = JSON.parse(yaml);
 
-    card.content = content;
-    tab.card = card;
-    tabs[tabIndex] = tab;
+      const tabs = [...this._config.tabs];
+      const tab = { ...tabs[tabIndex] };
 
-    this._updateConfig({ ...this._config, tabs });
+      tab.card = cardConfig;
+      tabs[tabIndex] = tab;
+
+      this._updateConfig({ ...this._config, tabs });
+    } catch (e) {
+      // Don't update if YAML is invalid
+      console.error("Invalid YAML:", e);
+    }
   }
 
-  private _cardConfigChanged(e: CustomEvent, tabIndex: number): void {
-    if (!this._config || !this.hass || !this._config.tabs) return;
-
-    const cardConfig = e.detail.config;
-
-    const tabs = [...this._config.tabs];
-    const tab = { ...tabs[tabIndex] };
-
-    tab.card = cardConfig;
-    tabs[tabIndex] = tab;
-
-    this._updateConfig({ ...this._config, tabs });
+  private _validateYaml(): void {
+    // Just show an alert for now
+    alert(
+      "YAML validation is not yet implemented. Please ensure your YAML is valid.",
+    );
   }
+
+  // Card configuration is now always edited as YAML/JSON
 
   private _updateConfig(config: TabbedCardConfig): void {
     this._config = config;
@@ -561,12 +445,19 @@ export class TabbedCardEditor extends LitElement implements LovelaceCardEditor {
       border-radius: 4px;
     }
 
-    .markdown-editor {
+    .markdown-editor,
+    .code-editor {
       width: 100%;
     }
 
     ha-textarea {
       width: 100%;
+    }
+
+    .editor-actions {
+      margin-top: 8px;
+      display: flex;
+      justify-content: flex-end;
     }
   `;
 }
