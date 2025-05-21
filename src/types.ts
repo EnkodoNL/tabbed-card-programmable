@@ -1,9 +1,7 @@
 import {
-  ActionConfig,
   LovelaceCard,
   LovelaceCardConfig,
   LovelaceCardEditor,
-  HomeAssistant,
 } from "custom-card-helpers";
 
 declare global {
@@ -39,8 +37,8 @@ export interface TabConfig {
   attributes?: {
     label?: string;
     icon?: string;
-    minWidth?: boolean;
-    stacked?: boolean;
+    inlineIcon?: boolean;
+    stacked?: boolean; // Keep for backward compatibility
     hide?: boolean | string;
     disable?: boolean | string;
     [key: string]: any;
