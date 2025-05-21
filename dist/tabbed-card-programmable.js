@@ -187,11 +187,15 @@
 
         <h4>Card Configuration</h4>
         <div class="card-picker">
-          <hui-card-picker
-            .hass=${this.hass}
-            .value=${((i=r.card)==null?void 0:i.type)||""}
-            @value-changed=${a=>this._cardTypeChanged(a,t)}
-          ></hui-card-picker>
+          <div class="card-type-selector">
+            <ha-select
+              label="Card Type"
+              .value=${((i=r.card)==null?void 0:i.type)||""}
+              @selected=${a=>this._cardTypeSelected(a,t)}
+            >
+              ${this._getCardTypes().map(a=>u`<mwc-list-item .value=${a}>${a}</mwc-list-item>`)}
+            </ha-select>
+          </div>
 
           ${(s=r.card)!=null&&s.type?u`
                 <div class="card-options">
@@ -200,7 +204,7 @@
               `:""}
         </div>
       </div>
-    `}_selectTab(r){this._selectedTabIndex=r}_addTab(){if(!this._config)return;const r=[...this._config.tabs||[]];r.push({attributes:{label:`Tab ${r.length+1}`},card:{type:"entities",entities:[]}}),this._updateConfig({...this._config,tabs:r}),this._selectedTabIndex=r.length-1}_removeTab(r,t){if(t.stopPropagation(),!this._config||!this._config.tabs)return;const e=[...this._config.tabs];e.splice(r,1),this._updateConfig({...this._config,tabs:e}),this._selectedTabIndex>=e.length&&(this._selectedTabIndex=Math.max(0,e.length-1))}_getStyleValue(r){return!this._config||!this._config.styles?"":this._config.styles[r]||""}_valueChangedOptions(r){if(!this._config||!this.hass)return;const t=r.target,e=t.configValue,i=t.value,s={...this._config.options||{}};i===""?delete s[e]:s[e]=i,this._updateConfig({...this._config,options:s})}_valueChangedStyles(r){if(!this._config||!this.hass)return;const t=r.target,e=t.configValue,i=t.value,s={...this._config.styles||{}};i===""?delete s[e]:s[e]=i,this._updateConfig({...this._config,styles:s})}_valueChangedTabAttribute(r,t){if(!this._config||!this.hass||!this._config.tabs)return;const e=r.target,i=e.configValue,s=e.type==="checkbox"?e.checked:e.value,a=[...this._config.tabs],o={...a[t]},n={...o.attributes||{}};s===""||s===!1?delete n[i]:n[i]=s,o.attributes=n,a[t]=o,this._updateConfig({...this._config,tabs:a})}_cardTypeChanged(r,t){if(!this._config||!this.hass||!this._config.tabs)return;const e=r.detail.value,i=[...this._config.tabs],s={...i[t]},a=s.card||{};if(e==="markdown"&&a.type==="markdown")s.card={...a,type:e};else{const o={type:e};a.entity&&["entity","button","gauge","sensor"].includes(e)&&(o.entity=a.entity),a.entities&&["entities","glance","history-graph"].includes(e)&&(o.entities=a.entities),a.title&&(o.title=a.title),s.card=o}i[t]=s,this._updateConfig({...this._config,tabs:i})}_renderCardEditor(r,t){return!r||!r.type?u``:r.type==="markdown"?u`
+    `}_selectTab(r){this._selectedTabIndex=r}_addTab(){if(!this._config)return;const r=[...this._config.tabs||[]];r.push({attributes:{label:`Tab ${r.length+1}`},card:{type:"entities",entities:[]}}),this._updateConfig({...this._config,tabs:r}),this._selectedTabIndex=r.length-1}_removeTab(r,t){if(t.stopPropagation(),!this._config||!this._config.tabs)return;const e=[...this._config.tabs];e.splice(r,1),this._updateConfig({...this._config,tabs:e}),this._selectedTabIndex>=e.length&&(this._selectedTabIndex=Math.max(0,e.length-1))}_getStyleValue(r){return!this._config||!this._config.styles?"":this._config.styles[r]||""}_valueChangedOptions(r){if(!this._config||!this.hass)return;const t=r.target,e=t.configValue,i=t.value,s={...this._config.options||{}};i===""?delete s[e]:s[e]=i,this._updateConfig({...this._config,options:s})}_valueChangedStyles(r){if(!this._config||!this.hass)return;const t=r.target,e=t.configValue,i=t.value,s={...this._config.styles||{}};i===""?delete s[e]:s[e]=i,this._updateConfig({...this._config,styles:s})}_valueChangedTabAttribute(r,t){if(!this._config||!this.hass||!this._config.tabs)return;const e=r.target,i=e.configValue,s=e.type==="checkbox"?e.checked:e.value,a=[...this._config.tabs],o={...a[t]},n={...o.attributes||{}};s===""||s===!1?delete n[i]:n[i]=s,o.attributes=n,a[t]=o,this._updateConfig({...this._config,tabs:a})}_getCardTypes(){return["entities","markdown","button","gauge","glance","history-graph","horizontal-stack","vertical-stack","light","map","picture","picture-elements","picture-entity","picture-glance","sensor","thermostat","weather-forecast","conditional","entity","grid","humidifier","logbook","media-control","statistic","statistics-graph","tile"]}_cardTypeSelected(r,t){if(!this._config||!this.hass||!this._config.tabs)return;const i=r.target.value;this._cardTypeChanged({detail:{value:i}},t)}_cardTypeChanged(r,t){if(!this._config||!this.hass||!this._config.tabs)return;const e=r.detail.value,i=[...this._config.tabs],s={...i[t]},a=s.card||{};if(e==="markdown"&&a.type==="markdown")s.card={...a,type:e};else{const o={type:e};a.entity&&["entity","button","gauge","sensor"].includes(e)&&(o.entity=a.entity),a.entities&&["entities","glance","history-graph"].includes(e)&&(o.entities=a.entities),a.title&&(o.title=a.title),s.card=o}i[t]=s,this._updateConfig({...this._config,tabs:i})}_renderCardEditor(r,t){return!r||!r.type?u``:r.type==="markdown"?u`
         <div class="markdown-editor">
           <ha-textarea
             label="Markdown Content"

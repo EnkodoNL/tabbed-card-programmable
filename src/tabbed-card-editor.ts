@@ -191,12 +191,18 @@ export class TabbedCardEditor extends LitElement implements LovelaceCardEditor {
 
         <h4>Card Configuration</h4>
         <div class="card-picker">
-          <hui-card-picker
-            .hass=${this.hass}
-            .value=${tab.card?.type || ""}
-            @value-changed=${(e: CustomEvent) =>
-              this._cardTypeChanged(e, index)}
-          ></hui-card-picker>
+          <div class="card-type-selector">
+            <ha-select
+              label="Card Type"
+              .value=${tab.card?.type || ""}
+              @selected=${(e: CustomEvent) => this._cardTypeSelected(e, index)}
+            >
+              ${this._getCardTypes().map(
+                (type) =>
+                  html`<mwc-list-item .value=${type}>${type}</mwc-list-item>`,
+              )}
+            </ha-select>
+          </div>
 
           ${tab.card?.type
             ? html`
@@ -305,6 +311,50 @@ export class TabbedCardEditor extends LitElement implements LovelaceCardEditor {
     tabs[tabIndex] = tab;
 
     this._updateConfig({ ...this._config, tabs });
+  }
+
+  private _getCardTypes(): string[] {
+    // List of common card types
+    return [
+      "entities",
+      "markdown",
+      "button",
+      "gauge",
+      "glance",
+      "history-graph",
+      "horizontal-stack",
+      "vertical-stack",
+      "light",
+      "map",
+      "picture",
+      "picture-elements",
+      "picture-entity",
+      "picture-glance",
+      "sensor",
+      "thermostat",
+      "weather-forecast",
+      "conditional",
+      "entity",
+      "grid",
+      "humidifier",
+      "logbook",
+      "media-control",
+      "statistic",
+      "statistics-graph",
+      "tile",
+    ];
+  }
+
+  private _cardTypeSelected(e: CustomEvent, tabIndex: number): void {
+    if (!this._config || !this.hass || !this._config.tabs) return;
+
+    const select = e.target as HTMLSelectElement;
+    const cardType = select.value;
+
+    this._cardTypeChanged(
+      { detail: { value: cardType } } as CustomEvent,
+      tabIndex,
+    );
   }
 
   private _cardTypeChanged(e: CustomEvent, tabIndex: number): void {
