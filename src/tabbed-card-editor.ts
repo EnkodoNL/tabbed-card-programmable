@@ -1,208 +1,433 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import { LitElement, html, css, CSSResultGroup, TemplateResult } from "lit";
+import { customElement, property, state } from "lit/decorators.js";
 import {
-  LitElement,
-  // html,
-  // TemplateResult,
-  // css,
-  // CSSResultGroup
-} from "lit";
-import {
-  // HomeAssistant,
-  // fireEvent,
+  HomeAssistant,
+  fireEvent,
   LovelaceCardEditor,
-  LovelaceCard,
 } from "custom-card-helpers";
-
-// import { ScopedRegistryHost } from "@lit-labs/scoped-registry-mixin";
-import { BoilerplateCardConfig } from "./types";
-import { customElement, state } from "lit/decorators.js";
-// import { formfieldDefinition } from "../elements/formfield";
-// import { selectDefinition } from "../elements/select";
-// import { switchDefinition } from "../elements/switch";
-// import { textfieldDefinition } from "../elements/textfield";
+import { TabbedCardConfig, TabConfig } from "./types";
 
 @customElement("tabbed-card-editor")
-export class TabbedCardEditor extends LitElement {
-  @state() private _config?: BoilerplateCardConfig;
+export class TabbedCardEditor extends LitElement implements LovelaceCardEditor {
+  @property({ attribute: false }) public hass?: HomeAssistant;
+  @state() private _config?: TabbedCardConfig;
   @state() private _helpers?: any;
+  @state() private _selectedTabIndex = 0;
 
-  public setConfig(config: BoilerplateCardConfig): void {
+  public setConfig(config: TabbedCardConfig): void {
     this._config = config;
-
     this.loadCardHelpers();
   }
 
   private async loadCardHelpers(): Promise<void> {
     this._helpers = await (window as any).loadCardHelpers();
   }
-  // setConfig(config) {
-  //   this._config = config;
-  // }
 
-  // configChanged(newConfig) {
-  //   const event = new Event("config-changed", {
-  //     bubbles: true,
-  //     composed: true,
-  //   });
-  //   event.detail = { config: newConfig };
-  //   this.dispatchEvent(event);
-  // }
-}
+  protected render(): TemplateResult | void {
+    if (!this.hass || !this._config) {
+      return html``;
+    }
 
-// @customElement("boilerplate-card-editor")
-// export class BoilerplateCardEditor
-//   extends ScopedRegistryHost(LitElement)
-//   implements LovelaceCardEditor
-// {
-//   @property({ attribute: false }) public hass?: HomeAssistant;
+    // Ensure tabs array exists
+    const tabs = this._config.tabs || [];
 
-//   @state() private _config?: BoilerplateCardConfig;
+    return html`
+      <div class="card-config">
+        <div class="tabs-container">
+          <div class="tabs">
+            ${tabs.map(
+              (tab: TabConfig, index: number) => html`
+                <div
+                  class="tab ${this._selectedTabIndex === index
+                    ? "selected"
+                    : ""}"
+                  @click=${() => this._selectTab(index)}
+                >
+                  ${tab.attributes?.label
+                    ? tab.attributes.label
+                    : `Tab ${index + 1}`}
+                  <ha-icon-button
+                    .path=${"M19,13H5V11H19V13Z"}
+                    @click=${(e: Event) => this._removeTab(index, e)}
+                  ></ha-icon-button>
+                </div>
+              `,
+            )}
+            <div class="tab add-tab" @click=${this._addTab}>
+              <ha-icon-button
+                .path=${"M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z"}
+              ></ha-icon-button>
+              Add Tab
+            </div>
+          </div>
 
-//   @state() private _helpers?: any;
-
-//   private _initialized = false;
-
-//   static elementDefinitions = {
-//     ...textfieldDefinition,
-//     ...selectDefinition,
-//     ...switchDefinition,
-//     ...formfieldDefinition,
-//   };
-
-//   public setConfig(config: BoilerplateCardConfig): void {
-//     this._config = config;
-
-//     this.loadCardHelpers();
-//   }
-
-//   protected shouldUpdate(): boolean {
-//     if (!this._initialized) {
-//       this._initialize();
-//     }
-
-//     return true;
-//   }
-
-//   get _name(): string {
-//     return this._config?.name || "";
-//   }
-
-//   get _entity(): string {
-//     return this._config?.entity || "";
-//   }
-
-//   get _show_warning(): boolean {
-//     return this._config?.show_warning || false;
-//   }
-
-//   get _show_error(): boolean {
-//     return this._config?.show_error || false;
-//   }
-
-//   protected render(): TemplateResult | void {
-//     if (!this.hass || !this._helpers) {
-//       return html``;
-//     }
-
-//     // You can restrict on domain type
-//     const entities = Object.keys(this.hass.states);
-
-//     return html`
-//       <mwc-select
-//         naturalMenuWidth
-//         fixedMenuPosition
-//         label="Entity (Required)"
-//         .configValue=${"entity"}
-//         .value=${this._entity}
-//         @selected=${this._valueChanged}
-//         @closed=${(ev) => ev.stopPropagation()}
-//       >
-//         ${entities.map((entity) => {
-//           return html`<mwc-list-item .value=${entity}
-//             >${entity}</mwc-list-item
-//           >`;
-//         })}
-//       </mwc-select>
-//       <mwc-textfield
-//         label="Name (Optional)"
-//         .value=${this._name}
-//         .configValue=${"name"}
-//         @input=${this._valueChanged}
-//       ></mwc-textfield>
-//       <mwc-formfield
-//         .label=${`Toggle warning ${this._show_warning ? "off" : "on"}`}
-//       >
-//         <mwc-switch
-//           .checked=${this._show_warning !== false}
-//           .configValue=${"show_warning"}
-//           @change=${this._valueChanged}
-//         ></mwc-switch>
-//       </mwc-formfield>
-//       <mwc-formfield
-//         .label=${`Toggle error ${this._show_error ? "off" : "on"}`}
-//       >
-//         <mwc-switch
-//           .checked=${this._show_error !== false}
-//           .configValue=${"show_error"}
-//           @change=${this._valueChanged}
-//         ></mwc-switch>
-//       </mwc-formfield>
-//     `;
-//   }
-
-//   private _initialize(): void {
-//     if (this.hass === undefined) return;
-//     if (this._config === undefined) return;
-//     if (this._helpers === undefined) return;
-//     this._initialized = true;
-//   }
-
-//   private async loadCardHelpers(): Promise<void> {
-//     this._helpers = await (window as any).loadCardHelpers();
-//   }
-
-//   private _valueChanged(ev): void {
-//     if (!this._config || !this.hass) {
-//       return;
-//     }
-//     const target = ev.target;
-//     if (this[`_${target.configValue}`] === target.value) {
-//       return;
-//     }
-//     if (target.configValue) {
-//       if (target.value === "") {
-//         const tmpConfig = { ...this._config };
-//         delete tmpConfig[target.configValue];
-//         this._config = tmpConfig;
-//       } else {
-//         this._config = {
-//           ...this._config,
-//           [target.configValue]:
-//             target.checked !== undefined ? target.checked : target.value,
-//         };
-//       }
-//     }
-//     fireEvent(this, "config-changed", { config: this._config });
-//   }
-
-//   static styles: CSSResultGroup = css`
-//     mwc-select,
-//     mwc-textfield {
-//       margin-bottom: 16px;
-//       display: block;
-//     }
-//     mwc-formfield {
-//       padding-bottom: 8px;
-//     }
-//     mwc-switch {
-//       --mdc-theme-secondary: var(--switch-checked-color);
-//     }
-//   `;
-// }
-
-declare global {
-  interface HTMLElementTagNameMap {
-    "tabbed-card-editor": LovelaceCardEditor;
-    "hui-error-card": LovelaceCard;
+          <div class="tab-content">
+            ${this._renderGlobalConfig()}
+            ${tabs.length > 0 && this._selectedTabIndex < tabs.length
+              ? this._renderTabConfig(
+                  tabs[this._selectedTabIndex],
+                  this._selectedTabIndex,
+                )
+              : ""}
+          </div>
+        </div>
+      </div>
+    `;
   }
+
+  private _renderGlobalConfig(): TemplateResult {
+    const options = this._config?.options || {};
+
+    return html`
+      <div class="global-config">
+        <h3>Global Configuration</h3>
+
+        <ha-textfield
+          label="Default Tab Index"
+          .value=${options.defaultTabIndex !== undefined
+            ? options.defaultTabIndex
+            : ""}
+          .configValue=${"defaultTabIndex"}
+          @input=${this._valueChangedOptions}
+          helper-text="Index of the default tab (0-based) or Jinja template"
+        ></ha-textfield>
+
+        <h4>Global Styles</h4>
+        <ha-textfield
+          label="Primary Color"
+          .value=${this._getStyleValue("--md-sys-color-primary")}
+          .configValue=${"--md-sys-color-primary"}
+          @input=${this._valueChangedStyles}
+          helper-text="CSS color for active tab (--md-sys-color-primary)"
+        ></ha-textfield>
+
+        <ha-textfield
+          label="Inactive Tab Color"
+          .value=${this._getStyleValue("--md-sys-color-on-surface-variant")}
+          .configValue=${"--md-sys-color-on-surface-variant"}
+          @input=${this._valueChangedStyles}
+          helper-text="CSS color for inactive tabs (--md-sys-color-on-surface-variant)"
+        ></ha-textfield>
+
+        <ha-textfield
+          label="Icon Color"
+          .value=${this._getStyleValue("--md-sys-color-on-surface")}
+          .configValue=${"--md-sys-color-on-surface"}
+          @input=${this._valueChangedStyles}
+          helper-text="CSS color for icons (--md-sys-color-on-surface)"
+        ></ha-textfield>
+
+        <ha-textfield
+          label="Font Size"
+          .value=${this._getStyleValue(
+            "--md-sys-typescale-label-large-font-size",
+          )}
+          .configValue=${"--md-sys-typescale-label-large-font-size"}
+          @input=${this._valueChangedStyles}
+          helper-text="Font size for tab labels (--md-sys-typescale-label-large-font-size)"
+        ></ha-textfield>
+      </div>
+    `;
+  }
+
+  private _renderTabConfig(tab: TabConfig, index: number): TemplateResult {
+    if (!tab) return html``;
+
+    const attributes = tab.attributes || {};
+
+    return html`
+      <div class="tab-config">
+        <h3>Tab ${index + 1} Configuration</h3>
+
+        <h4>Tab Properties</h4>
+        <ha-textfield
+          label="Label"
+          .value=${attributes.label || ""}
+          .configValue=${"label"}
+          @input=${(e: Event) => this._valueChangedTabAttribute(e, index)}
+          helper-text="Tab label text (supports Jinja templates)"
+        ></ha-textfield>
+
+        <ha-textfield
+          label="Icon"
+          .value=${attributes.icon || ""}
+          .configValue=${"icon"}
+          @input=${(e: Event) => this._valueChangedTabAttribute(e, index)}
+          helper-text="Material Design icon (e.g., mdi:home)"
+        ></ha-textfield>
+
+        <ha-formfield label="Stack Icon and Label">
+          <ha-switch
+            .checked=${attributes.stacked === true}
+            .configValue=${"stacked"}
+            @change=${(e: Event) => this._valueChangedTabAttribute(e, index)}
+          ></ha-switch>
+        </ha-formfield>
+
+        <ha-formfield label="Minimum Width">
+          <ha-switch
+            .checked=${attributes.minWidth === true}
+            .configValue=${"minWidth"}
+            @change=${(e: Event) => this._valueChangedTabAttribute(e, index)}
+          ></ha-switch>
+        </ha-formfield>
+
+        <h4>Dynamic Behavior</h4>
+        <ha-textfield
+          label="Hide Condition"
+          .value=${attributes.hide !== undefined ? attributes.hide : ""}
+          .configValue=${"hide"}
+          @input=${(e: Event) => this._valueChangedTabAttribute(e, index)}
+          helper-text="Boolean or Jinja template that evaluates to true/false"
+        ></ha-textfield>
+
+        <ha-textfield
+          label="Disable Condition"
+          .value=${attributes.disable !== undefined ? attributes.disable : ""}
+          .configValue=${"disable"}
+          @input=${(e: Event) => this._valueChangedTabAttribute(e, index)}
+          helper-text="Boolean or Jinja template that evaluates to true/false"
+        ></ha-textfield>
+
+        <h4>Card Configuration</h4>
+        <div class="card-picker">
+          <hui-card-picker
+            .hass=${this.hass}
+            .value=${tab.card?.type || ""}
+            @value-changed=${(e: CustomEvent) =>
+              this._cardTypeChanged(e, index)}
+          ></hui-card-picker>
+
+          ${tab.card?.type
+            ? html`
+                <div class="card-options">
+                  <hui-card-editor
+                    .hass=${this.hass}
+                    .value=${tab.card}
+                    .lovelace=${(window as any).lovelace}
+                    @config-changed=${(e: CustomEvent) =>
+                      this._cardConfigChanged(e, index)}
+                  ></hui-card-editor>
+                </div>
+              `
+            : ""}
+        </div>
+      </div>
+    `;
+  }
+
+  private _selectTab(index: number): void {
+    this._selectedTabIndex = index;
+  }
+
+  private _addTab(): void {
+    if (!this._config) return;
+
+    const tabs = [...(this._config.tabs || [])];
+    tabs.push({
+      attributes: { label: `Tab ${tabs.length + 1}` },
+      card: { type: "entities", entities: [] },
+    });
+
+    this._updateConfig({ ...this._config, tabs });
+    this._selectedTabIndex = tabs.length - 1;
+  }
+
+  private _removeTab(index: number, e: Event): void {
+    e.stopPropagation();
+    if (!this._config || !this._config.tabs) return;
+
+    const tabs = [...this._config.tabs];
+    tabs.splice(index, 1);
+
+    this._updateConfig({ ...this._config, tabs });
+    if (this._selectedTabIndex >= tabs.length) {
+      this._selectedTabIndex = Math.max(0, tabs.length - 1);
+    }
+  }
+
+  private _getStyleValue(property: string): string {
+    if (!this._config || !this._config.styles) return "";
+    return (this._config.styles as any)[property] || "";
+  }
+
+  private _valueChangedOptions(e: Event): void {
+    if (!this._config || !this.hass) return;
+
+    const target = e.target as HTMLInputElement;
+    const configValue = target.configValue as string;
+    const value = target.value;
+
+    const options = { ...(this._config.options || {}) };
+
+    if (value === "") {
+      delete options[configValue];
+    } else {
+      options[configValue] = value;
+    }
+
+    this._updateConfig({ ...this._config, options });
+  }
+
+  private _valueChangedStyles(e: Event): void {
+    if (!this._config || !this.hass) return;
+
+    const target = e.target as HTMLInputElement;
+    const configValue = target.configValue as string;
+    const value = target.value;
+
+    const styles = { ...(this._config.styles || {}) };
+
+    if (value === "") {
+      delete styles[configValue];
+    } else {
+      styles[configValue] = value;
+    }
+
+    this._updateConfig({ ...this._config, styles });
+  }
+
+  private _valueChangedTabAttribute(e: Event, tabIndex: number): void {
+    if (!this._config || !this.hass || !this._config.tabs) return;
+
+    const target = e.target as HTMLInputElement;
+    const configValue = target.configValue as string;
+    const value =
+      target.type === "checkbox"
+        ? (target as HTMLInputElement).checked
+        : target.value;
+
+    const tabs = [...this._config.tabs];
+    const tab = { ...tabs[tabIndex] };
+    const attributes = { ...(tab.attributes || {}) };
+
+    if (value === "" || value === false) {
+      delete attributes[configValue];
+    } else {
+      attributes[configValue] = value;
+    }
+
+    tab.attributes = attributes;
+    tabs[tabIndex] = tab;
+
+    this._updateConfig({ ...this._config, tabs });
+  }
+
+  private _cardTypeChanged(e: CustomEvent, tabIndex: number): void {
+    if (!this._config || !this.hass || !this._config.tabs) return;
+
+    const cardType = e.detail.value;
+
+    const tabs = [...this._config.tabs];
+    const tab = { ...tabs[tabIndex] };
+
+    tab.card = { type: cardType };
+    tabs[tabIndex] = tab;
+
+    this._updateConfig({ ...this._config, tabs });
+  }
+
+  private _cardConfigChanged(e: CustomEvent, tabIndex: number): void {
+    if (!this._config || !this.hass || !this._config.tabs) return;
+
+    const cardConfig = e.detail.config;
+
+    const tabs = [...this._config.tabs];
+    const tab = { ...tabs[tabIndex] };
+
+    tab.card = cardConfig;
+    tabs[tabIndex] = tab;
+
+    this._updateConfig({ ...this._config, tabs });
+  }
+
+  private _updateConfig(config: TabbedCardConfig): void {
+    this._config = config;
+    fireEvent(this, "config-changed", { config });
+  }
+
+  static styles: CSSResultGroup = css`
+    .card-config {
+      width: 100%;
+    }
+
+    .tabs-container {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+    }
+
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .tab {
+      padding: 8px 16px;
+      border: 1px solid var(--divider-color);
+      border-radius: 4px;
+      margin-right: 8px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+    }
+
+    .tab.selected {
+      background-color: var(--primary-color);
+      color: var(--text-primary-color);
+    }
+
+    .tab.add-tab {
+      border-style: dashed;
+      display: flex;
+      align-items: center;
+    }
+
+    .tab-content {
+      border: 1px solid var(--divider-color);
+      padding: 16px;
+      border-radius: 4px;
+    }
+
+    .global-config,
+    .tab-config {
+      display: flex;
+      flex-direction: column;
+    }
+
+    h3 {
+      margin-top: 0;
+      margin-bottom: 16px;
+      font-size: 18px;
+    }
+
+    h4 {
+      margin-top: 16px;
+      margin-bottom: 8px;
+      font-size: 16px;
+    }
+
+    ha-textfield {
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    ha-formfield {
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .card-picker {
+      margin-top: 8px;
+    }
+
+    .card-options {
+      margin-top: 8px;
+      border: 1px solid var(--divider-color);
+      padding: 16px;
+      border-radius: 4px;
+    }
+  `;
 }

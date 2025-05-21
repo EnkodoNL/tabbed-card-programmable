@@ -8,40 +8,14 @@ import {
   LovelaceCardConfig,
   LovelaceCardEditor,
 } from "custom-card-helpers";
+import { TabbedCardConfig, TabConfig } from "./types";
 import "./registry-patch.ts";
 import "./tabbed-card-editor";
 import "@material/web/tabs/tabs.js";
 import "@material/web/tabs/primary-tab.js";
 import "@material/web/icon/icon.js";
 
-interface TabbedCardConfig extends LovelaceCardConfig {
-  options?: options;
-  styles?: object;
-  attributes?: object;
-  tabs: Tab[];
-}
-
-interface options {
-  defaultTabIndex?: string | number | undefined;
-}
-
-interface Tab {
-  styles?: object;
-  attributes?: {
-    label?: string;
-    icon?: string;
-    minWidth?: boolean;
-    stacked?: boolean;
-    hide?: boolean | string; // Option to hide the tab
-    disable?: boolean | string; // Option to disable the tab
-  };
-  card: LovelaceCardConfig;
-}
-
-// Store evaluated labels
-interface ProcessedTab extends Tab {
-  processedLabel?: string; // Processed label after Jinja evaluation
-}
+// Types are now imported from types.ts
 
 @customElement("tabbed-card-programmable")
 export class TabbedCard extends LitElement {
@@ -50,7 +24,7 @@ export class TabbedCard extends LitElement {
   @property() private _helpers: any;
 
   @state() private _config!: TabbedCardConfig;
-  @state() private _tabs!: ProcessedTab[];
+  @state() private _tabs!: TabConfig[];
   @state() private _hiddenTabs: boolean[] = [];
   @state() private _disabledTabs: boolean[] = [];
   @state() private _processedLabels: string[] = [];

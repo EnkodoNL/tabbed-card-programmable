@@ -8,7 +8,7 @@ A custom card for home assistant that utilizes tabs to segregate individual card
 
 As the original dev kinghat did not respond to my pull request (https://github.com/kinghat/tabbed-card/pull/105) for a long time, I decided to fork and publish this as a separate card.
 
-### v0.3.6 - 2025-05-20
+### v0.4.0 - 2025-05-21
 
 Needed some features for my own use case, so I added them to this fork:
 
