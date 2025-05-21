@@ -13,6 +13,13 @@ declare global {
   interface HTMLInputElement {
     configValue?: string;
   }
+
+  interface Window {
+    jsyaml?: {
+      load: (yaml: string) => any;
+      dump: (obj: any) => string;
+    };
+  }
 }
 
 export interface TabbedCardConfig extends LovelaceCardConfig {

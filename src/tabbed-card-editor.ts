@@ -118,13 +118,37 @@ export class TabbedCardEditor extends LitElement implements LovelaceCardEditor {
         ></ha-textfield>
 
         <ha-textfield
-          label="Font Size"
+          label="Active Tab Indicator Color"
           .value=${this._getStyleValue(
-            "--md-sys-typescale-label-large-font-size",
+            "--md-primary-tab-active-indicator-color",
           )}
-          .configValue=${"--md-sys-typescale-label-large-font-size"}
+          .configValue=${"--md-primary-tab-active-indicator-color"}
           @input=${this._valueChangedStyles}
-          helper-text="Font size for tab labels (--md-sys-typescale-label-large-font-size)"
+          helper-text="Color of the active tab indicator (--md-primary-tab-active-indicator-color)"
+        ></ha-textfield>
+
+        <ha-textfield
+          label="Tab Container Color"
+          .value=${this._getStyleValue("--md-primary-tab-container-color")}
+          .configValue=${"--md-primary-tab-container-color"}
+          @input=${this._valueChangedStyles}
+          helper-text="Background color of the tab container (--md-primary-tab-container-color)"
+        ></ha-textfield>
+
+        <ha-textfield
+          label="Tab Font Family"
+          .value=${this._getStyleValue("--md-primary-tab-label-text-font")}
+          .configValue=${"--md-primary-tab-label-text-font"}
+          @input=${this._valueChangedStyles}
+          helper-text="Font family for tab labels (--md-primary-tab-label-text-font)"
+        ></ha-textfield>
+
+        <ha-textfield
+          label="Font Size"
+          .value=${this._getStyleValue("--md-primary-tab-label-text-size")}
+          .configValue=${"--md-primary-tab-label-text-size"}
+          @input=${this._valueChangedStyles}
+          helper-text="Font size for tab labels (--md-primary-tab-label-text-size)"
         ></ha-textfield>
       </div>
     `;
@@ -201,14 +225,15 @@ export class TabbedCardEditor extends LitElement implements LovelaceCardEditor {
         <div class="card-picker">
           <div class="card-options">
             <div class="code-editor">
-              <div class="textarea-container">
+              <div class="code-editor-container">
                 <label>Card Configuration (YAML or JSON)</label>
-                <textarea
+                <ha-code-editor
+                  .hass=${this.hass}
                   .value=${this._cardConfigToYaml(tab.card || {})}
-                  @input=${(e: Event) => this._handleYamlChanged(e, index)}
-                  rows="12"
-                  style="width: 100%; min-height: 200px;"
-                ></textarea>
+                  mode="yaml"
+                  @value-changed=${(e: CustomEvent) =>
+                    this._handleCodeEditorChanged(e, index)}
+                ></ha-code-editor>
               </div>
               <div class="editor-actions">
                 <mwc-button @click=${() => this._validateYaml()}>
@@ -336,6 +361,34 @@ export class TabbedCardEditor extends LitElement implements LovelaceCardEditor {
     }
   }
 
+  private _handleCodeEditorChanged(e: CustomEvent, tabIndex: number): void {
+    if (!this._config || !this.hass || !this._config.tabs) return;
+
+    const yaml = e.detail.value;
+
+    try {
+      // Parse YAML if available, otherwise fallback to JSON
+      let cardConfig;
+      if (window.jsyaml && window.jsyaml.load) {
+        cardConfig = window.jsyaml.load(yaml);
+      } else {
+        cardConfig = JSON.parse(yaml);
+      }
+
+      const tabs = [...this._config.tabs];
+      const tab = { ...tabs[tabIndex] };
+
+      tab.card = cardConfig;
+      tabs[tabIndex] = tab;
+
+      this._updateConfig({ ...this._config, tabs });
+    } catch (e) {
+      // Don't update if YAML is invalid
+      console.error("Invalid YAML:", e);
+    }
+  }
+
+  // Keep for backward compatibility
   private _handleYamlChanged(e: Event, tabIndex: number): void {
     if (!this._config || !this.hass || !this._config.tabs) return;
 
@@ -343,7 +396,13 @@ export class TabbedCardEditor extends LitElement implements LovelaceCardEditor {
     const yaml = target.value;
 
     try {
-      const cardConfig = JSON.parse(yaml);
+      // Parse YAML if available, otherwise fallback to JSON
+      let cardConfig;
+      if (window.jsyaml && window.jsyaml.load) {
+        cardConfig = window.jsyaml.load(yaml);
+      } else {
+        cardConfig = JSON.parse(yaml);
+      }
 
       const tabs = [...this._config.tabs];
       const tab = { ...tabs[tabIndex] };
@@ -458,25 +517,19 @@ export class TabbedCardEditor extends LitElement implements LovelaceCardEditor {
 
     .markdown-editor,
     .code-editor,
-    .textarea-container {
+    .code-editor-container {
       width: 100%;
     }
 
-    .textarea-container label {
+    .code-editor-container label {
       display: block;
       margin-bottom: 8px;
       color: var(--primary-text-color);
     }
 
-    .textarea-container textarea {
+    ha-code-editor {
+      --code-mirror-height: 300px;
       width: 100%;
-      min-height: 200px;
-      padding: 8px;
-      border: 1px solid var(--divider-color);
-      border-radius: 4px;
-      background-color: var(--card-background-color, #fff);
-      color: var(--primary-text-color);
-      font-family: monospace;
     }
 
     .editor-actions {
