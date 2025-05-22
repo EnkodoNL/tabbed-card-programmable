@@ -166,7 +166,7 @@ export class TabbedCard extends LitElement {
         // Create tab (even if hidden)
         return {
           styles: tab?.styles,
-          attributes: { ...config?.attributes, ...tab?.attributes },
+          attributes: tab?.attributes,
           card: await this._createCard(tab.card),
           processedLabel: processedLabel,
         };

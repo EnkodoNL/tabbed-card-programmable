@@ -178,7 +178,7 @@ export class TabbedCardEditor extends LitElement implements LovelaceCardEditor {
         ></ha-textfield>
 
         <ha-textfield
-          label="Icon"
+          label="Material Design Icon (e.g., mdi:home)"
           .value=${attributes.icon || ""}
           .configValue=${"icon"}
           @input=${(e: Event) => this._valueChangedTabAttribute(e, index)}
@@ -211,7 +211,7 @@ export class TabbedCardEditor extends LitElement implements LovelaceCardEditor {
 
         <h4>Dynamic Behavior</h4>
         <ha-textfield
-          label="Hide Condition"
+          label="Hide Condition (Jinja-template or true/false)"
           .value=${attributes.hide !== undefined ? attributes.hide : ""}
           .configValue=${"hide"}
           @input=${(e: Event) => this._valueChangedTabAttribute(e, index)}
@@ -219,7 +219,7 @@ export class TabbedCardEditor extends LitElement implements LovelaceCardEditor {
         ></ha-textfield>
 
         <ha-textfield
-          label="Disable Condition"
+          label="Disable Condition (Jinja-template or true/false)"
           .value=${attributes.disable !== undefined ? attributes.disable : ""}
           .configValue=${"disable"}
           @input=${(e: Event) => this._valueChangedTabAttribute(e, index)}
