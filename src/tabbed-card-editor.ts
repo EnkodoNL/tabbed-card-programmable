@@ -33,7 +33,15 @@ export class TabbedCardEditor extends LitElement implements LovelaceCardEditor {
 
     return html`
       <div class="card-config">
+        <!-- Global Configuration Card -->
+        <div class="config-card global-card">
+          <h3>Global Configuration</h3>
+          ${this._renderGlobalConfig()}
+        </div>
+
+        <!-- Tabs Configuration -->
         <div class="tabs-container">
+          <h3>Tab Configuration</h3>
           <div class="tabs">
             ${tabs.map(
               (tab: TabConfig, index: number) => html`
@@ -62,7 +70,6 @@ export class TabbedCardEditor extends LitElement implements LovelaceCardEditor {
           </div>
 
           <div class="tab-content">
-            ${this._renderGlobalConfig()}
             ${tabs.length > 0 && this._selectedTabIndex < tabs.length
               ? this._renderTabConfig(
                   tabs[this._selectedTabIndex],
@@ -80,8 +87,6 @@ export class TabbedCardEditor extends LitElement implements LovelaceCardEditor {
 
     return html`
       <div class="global-config">
-        <h3>Global Configuration</h3>
-
         <ha-textfield
           label="Default Tab Index"
           .value=${options.defaultTabIndex !== undefined
@@ -226,7 +231,7 @@ export class TabbedCardEditor extends LitElement implements LovelaceCardEditor {
           <div class="card-options">
             <div class="code-editor">
               <div class="code-editor-container">
-                <label>Card Configuration (YAML or JSON)</label>
+                <label>Card Configuration (JSON-only for now)</label>
                 <ha-code-editor
                   .hass=${this.hass}
                   .value=${this._cardConfigToYaml(tab.card || {})}
@@ -434,12 +439,29 @@ export class TabbedCardEditor extends LitElement implements LovelaceCardEditor {
   static styles: CSSResultGroup = css`
     .card-config {
       width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .config-card {
+      border: 1px solid var(--divider-color);
+      border-radius: 4px;
+      padding: 16px;
+      margin-bottom: 8px;
+    }
+
+    .global-card {
+      background-color: var(--card-background-color, #fff);
     }
 
     .tabs-container {
       display: flex;
       flex-direction: column;
       width: 100%;
+      border: 1px solid var(--divider-color);
+      border-radius: 4px;
+      padding: 16px;
     }
 
     .tabs {
@@ -474,6 +496,8 @@ export class TabbedCardEditor extends LitElement implements LovelaceCardEditor {
       border: 1px solid var(--divider-color);
       padding: 16px;
       border-radius: 4px;
+      margin-top: 16px;
+      background-color: var(--card-background-color, #fff);
     }
 
     .global-config,
