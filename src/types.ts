@@ -1,5 +1,4 @@
 import {
-  ActionConfig,
   LovelaceCard,
   LovelaceCardConfig,
   LovelaceCardEditor,
@@ -7,19 +6,49 @@ import {
 
 declare global {
   interface HTMLElementTagNameMap {
-    "boilerplate-card-editor": LovelaceCardEditor;
+    "tabbed-card-editor": LovelaceCardEditor;
     "hui-error-card": LovelaceCard;
+  }
+
+  interface HTMLInputElement {
+    configValue?: string;
+  }
+
+  interface Window {
+    jsyaml?: {
+      load: (yaml: string) => any;
+      dump: (obj: any) => string;
+    };
   }
 }
 
-export interface BoilerplateCardConfig extends LovelaceCardConfig {
+export interface TabbedCardConfig extends LovelaceCardConfig {
   type: string;
-  name?: string;
-  show_warning?: boolean;
-  show_error?: boolean;
-  test_gui?: boolean;
-  entity?: string;
-  tap_action?: ActionConfig;
-  hold_action?: ActionConfig;
-  double_tap_action?: ActionConfig;
+  options?: {
+    defaultTabIndex?: string | number | undefined;
+    [key: string]: any;
+  };
+  styles?: {
+    [key: string]: string;
+  };
+  attributes?: {
+    [key: string]: any;
+  };
+  tabs: TabConfig[];
+}
+
+export interface TabConfig {
+  styles?: {
+    [key: string]: string;
+  };
+  attributes?: {
+    label?: string;
+    icon?: string;
+    stacked?: boolean;
+    hide?: boolean | string;
+    disable?: boolean | string;
+    [key: string]: any;
+  };
+  card: LovelaceCardConfig;
+  processedLabel?: string;
 }

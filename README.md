@@ -1,22 +1,25 @@
 # Tabbed Card Programmable
 
-#### based on kinghat's [Tabbed Card](https://github.com/kinghat/tabbed-card)
+A custom card for home assistant that utilizes tabs to segregate individual cards. Fork of [Tabbed Card](https://github.com/kinghat/tabbed-card) by kinghat.
 
-A custom card for home assistant that utilizes tabs to segregate individual cards.
+![Tabbed Card Programmable](assets/tabbed-card-programmable.png)
 
-#### Changes from kinghat's version:
+## All changes from kinghat's version (forked from v0.3.1):
 
-Added support for conditional default index of tabs like this:
+As the original dev kinghat did not respond to my pull request (https://github.com/kinghat/tabbed-card/pull/105) for a long time, I decided to fork and publish this as a separate card.
 
-```
-type: custom:tabbed-card-programmable
-options:
-  defaultTabIndex: '{% if now().hour > 17 %}2{% elif now().hour > 12 %}1{% else %}0{% endif %}'
-```
+### v0.4.0 - 2025-05-21
 
-As the original dev kinghat did not respond to my pull request (https://github.com/kinghat/tabbed-card/pull/105) for 4 months, I decided to publish this as a separate card.
+Needed some features for my own use case, so I added them to this fork:
 
-![Tabbed Card](assets/tabbed-card.png)
+- Added support for hiding and disabling tabs using the `hide` and `disable` attributes. Both attributes support boolean values or Jinja templates that evaluate to boolean values.
+- Added support for dynamic tab labels using Jinja templates
+- Upgraded from deprecated `@material/mwc-tab-bar` and `@material/mwc-tab` to the newer `@material/web` package
+- Removed support for `isFadingIndicator` and `isMinWidthIndicator` attributes (no longer supported by Material Web)
+
+### v0.3.4 - 2023-10-24
+
+- Added support for conditional default index of tabs using Jinja templates
 
 ## Installation
 
@@ -34,10 +37,10 @@ styles?:
 attributes?:
   label?: string
   icon?: string
-  isFadingIndicator?: boolean
   minWidth?: boolean
-  isMinWidthIndicator?: boolean
   stacked?: boolean
+  hide?: boolean | string # New property
+  disable?: boolean | string # New property
 tabs:
   - card:
       type:
@@ -45,9 +48,7 @@ tabs:
     attributes?:
       label?: string
       icon?: string
-      isFadingIndicator?: boolean
       minWidth?: boolean
-      isMinWidthIndicator?: boolean
       stacked?: boolean
 ```
 
@@ -100,9 +101,9 @@ You can apply global and per tab configuration to your card. Global configuratio
 
 ### **Options**
 
-| Property          | Default | Description                    |
-| ----------------- | ------- | ------------------------------ |
-| `defaultTabIndex` | `0`     | tab to display on first render |
+| Property          | Default | Description                                               |
+| ----------------- | ------- | --------------------------------------------------------- |
+| `defaultTabIndex` | `0`     | tab to display on first render (0 based, jinja supported) |
 
 ```yaml
 type: custom:tabbed-card-programmable
@@ -117,34 +118,40 @@ This card tries to closely match home assistants default tab styles. You can ove
 
 Default Custom Properties:
 
-| Name                                 | Default                    | Description                                                                                                                                                    |
-| ------------------------------------ | -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `--mdc-theme-primary`                | `--primary-text-color`     | Color of the activated tab's text, indicator, and ripple.                                                                                                      |
-| `--mdc-tab-text-label-color-default` | `rgba(225, 225, 225, 0.8)` | Color of an unactivated tab label. **_If you want transpareny on the unactivated tabs, you need to use an `rgba` value incorporating the 4th alpha channel._** |
-| `--mdc-typography-button-font-size`  | `14px`                     | Font size of the tab label.                                                                                                                                    |
+| Name                                             | Defaults (All from current HA-theme)       | Description                                 |
+| ------------------------------------------------ | ------------------------------------------ | ------------------------------------------- |
+| `--md-sys-color-primary`                         | 'var(--primary-text-color)'                | Color of the active tab's text color        |
+| `--md-sys-color-on-surface-variant`              | 'rgba(var(--rgb-primary-text-color), 0.6)' | Color of the inactive tab's background.     |
+| `--md-primary-tab-container-color`               | 'transparent'                              | Background color of the tab container.      |
+| `--md-primary-tab-label-text-font`               | 'var(--app-font-family)'                   | Font family for tab labels.                 |
+| `--md-primary-tab-active-indicator-color`        | 'var(--primary-text-color)'                | Color of the active tab indicator.          |
+| `--md-primary-tab-icon-color`                    | 'rgba(var(--rgb-primary-text-color), 0.6)' | Color of the tab icon.                      |
+| `--md-primary-tab-active-focus-icon-color`       | 'var(--primary-text-color)'                | Color of the active focused tab icon.       |
+| `--md-primary-tab-active-focus-label-text-color` | 'var(--primary-text-color)'                | Color of the active focused tab label text. |
+| `--md-primary-tab-label-text-size`               | 'var(--ha-font-size-m)'                    | Font size for tab labels.                   |
 
 ```yaml
 type: custom:tabbed-card-programmable
 styles: # global styles applied to all tabs
-  --mdc-theme-primary: yellow
-  --mdc-tab-text-label-color-default: orange
+  --md-sys-color-primary: yellow
+  --md-sys-color-on-surface-variant: orange
 tabs: ...
 ```
 
 ![Styling](assets/global-styles.png)
 
-See the full list of exposed custom properties: [`<mwc-tab>`](https://github.com/material-components/material-web/blob/mwc/packages/tab/README.md#css-custom-properties)
+See the full list of exposed custom properties: [`<md-tabs>` and `<md-primary-tab>`](https://material-web.dev/components/tabs/)
 
 ### **Attributes**
 
-| Name                  | Default | Description                                                     |
-| --------------------- | ------- | --------------------------------------------------------------- |
-| `label`               | `""`    | Text label to display in tab.                                   |
-| `icon`                | `""`    | Home Assistant `mdi:icon` name.                                 |
-| `isFadingIndicator`   | `false` | Indicator fades in and out instead of sliding.                  |
-| `minWidth`            | `false` | Shrinks tab as narrow as possible without causing text to wrap. |
-| `isMinWidthIndicator` | `false` | Shrinks indicator to be the size of the content.                |
-| `stacked`             | `false` | Stacks icon on top of label text.                               |
+| Name       | Default | Description                                                     |
+| ---------- | ------- | --------------------------------------------------------------- |
+| `label`    | `""`    | Text label to display in tab. Supports Jinja templates.         |
+| `icon`     | `""`    | Home Assistant `mdi:icon` name.                                 |
+| `minWidth` | `false` | Shrinks tab as narrow as possible without causing text to wrap. |
+| `stacked`  | `false` | Stacks icon on top of label text.                               |
+| `hide`     | `false` | Completely removes the tab from the tab bar.                    |
+| `disable`  | `false` | Shows the tab but makes it non-clickable (grayed out).          |
 
 Global attributes:
 
@@ -212,6 +219,87 @@ tabs:
 ```
 
 ![Local Attributes](assets/local-attributes.png)
+
+## Dynamic Tab Features
+
+### Hide and Disable Tabs
+
+You can hide or disable tabs using the `hide` and `disable` attributes. Both attributes support boolean values or Jinja templates that evaluate to boolean values.
+
+### Dynamic Tab Labels
+
+You can use Jinja templates in the `label` attribute to create dynamic tab labels that change based on conditions or entity states:
+
+```yaml
+type: custom:tabbed-card-programmable
+tabs:
+  - attributes:
+      label: "Temperature: {{ states('sensor.temperature') }}°C"
+    card:
+      type: entities
+      entities:
+        - sensor.temperature
+  - attributes:
+      label: "{% if is_state('light.living_room', 'on') %}Light ON{% else %}Light OFF{% endif %}"
+    card:
+      type: entities
+      entities:
+        - light.living_room
+```
+
+### Using boolean values:
+
+```yaml
+type: custom:tabbed-card-programmable
+tabs:
+  - attributes:
+      label: Always Visible
+    card:
+      type: entities
+      entities:
+        - light.living_room
+  - attributes:
+      label: Hidden Tab
+      hide: true
+    card:
+      type: entities
+      entities:
+        - light.bedroom
+  - attributes:
+      label: Disabled Tab
+      disable: true
+    card:
+      type: entities
+      entities:
+        - light.kitchen
+```
+
+### Using Jinja templates:
+
+```yaml
+type: custom:tabbed-card-programmable
+tabs:
+  - attributes:
+      label: Always Visible
+    card:
+      type: entities
+      entities:
+        - light.living_room
+  - attributes:
+      label: Hidden at Night
+      hide: "{% if now().hour < 6 or now().hour >= 22 %}true{% else %}false{% endif %}"
+    card:
+      type: entities
+      entities:
+        - light.bedroom
+  - attributes:
+      label: Disabled when Off
+      disable: "{% if is_state('light.kitchen', 'off') %}true{% else %}false{% endif %}"
+    card:
+      type: entities
+      entities:
+        - light.kitchen
+```
 
 ## Appreciation
 
