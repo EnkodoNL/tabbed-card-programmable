@@ -266,7 +266,8 @@ export class TabbedCard extends LitElement {
   }
 
   private _onTabChange(ev: Event) {
-    const newVisibleIndex = (ev.target as any).activeTabIndex;
+    const mdTabs = ev.target as any;
+    const newVisibleIndex = mdTabs.activeTabIndex;
 
     // Convert visible index to original index
     const visibleTabs = this._tabs
@@ -281,6 +282,18 @@ export class TabbedCard extends LitElement {
 
     if (this._disabledTabs[newOriginalIndex]) {
       // If the new tab is disabled, do not change the selected tab
+      // Find the index of the currently selected tab in the visible tabs array
+      const currentVisibleIndex = visibleTabs.findIndex(
+        ({ index }) => index === this.selectedTabIndex,
+      );
+
+      // Reset the activeTabIndex to the current tab
+      if (currentVisibleIndex >= 0) {
+        // Use setTimeout to avoid immediate reset which might be ignored
+        setTimeout(() => {
+          mdTabs.activeTabIndex = currentVisibleIndex;
+        }, 0);
+      }
       return;
     }
     this.selectedTabIndex = newOriginalIndex;
