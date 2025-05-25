@@ -89,12 +89,6 @@ export class TabbedCard extends LitElement {
   }
 
   async _createTabs(config: TabbedCardConfig) {
-    // debug log
-    console.log(
-      "_createTabs called with config:",
-      JSON.stringify(config, null, 2),
-    );
-
     const template = config?.options?.defaultTabIndex;
     if (typeof template === "undefined") {
       this.selectedTabIndex = 0;
@@ -109,54 +103,39 @@ export class TabbedCard extends LitElement {
       this.selectedTabIndex = isFinite(template) ? template : 0;
     }
 
-    // debug log
-    console.log("Initial selectedTabIndex:", this.selectedTabIndex);
-
     // Initialize arrays to track hidden and disabled states and processed labels
     this._hiddenTabs = [];
     this._disabledTabs = [];
     this._processedLabels = [];
 
     const tabs = await Promise.all(
-      config.tabs.map(async (tab, tabIndex) => {
-        // debug log
-        console.log(
-          `Processing tab ${tabIndex}:`,
-          JSON.stringify(tab.attributes, null, 2),
-        );
-
+      config.tabs.map(async (tab) => {
         // Check if tab should be hidden
         let hideTab = false;
         if (tab.attributes?.hide !== undefined) {
           if (typeof tab.attributes.hide === "string") {
-            // Evaluate Jinja template
-            const hideResult = await this.evaluateJinjaTemplate(
-              this.hass,
-              tab.attributes.hide,
-            );
-            hideTab = hideResult.toLowerCase() === "true";
-            // debug log
-            console.log(
-              `Tab ${tabIndex} hide (string):`,
-              tab.attributes.hide,
-              "->",
-              hideResult,
-              "->",
-              hideTab,
-            );
+            // Check if it's a simple "true" or "false" string
+            if (tab.attributes.hide.toLowerCase() === "true") {
+              hideTab = true;
+            } else if (tab.attributes.hide.toLowerCase() === "false") {
+              hideTab = false;
+            } else if (
+              tab.attributes.hide.includes("{%") ||
+              tab.attributes.hide.includes("{{")
+            ) {
+              // It's a Jinja template, evaluate it
+              const hideResult = await this.evaluateJinjaTemplate(
+                this.hass,
+                tab.attributes.hide,
+              );
+              hideTab = hideResult.toLowerCase() === "true";
+            } else {
+              // Some other string, treat as false
+              hideTab = false;
+            }
           } else {
             hideTab = !!tab.attributes.hide;
-            // debug log
-            console.log(
-              `Tab ${tabIndex} hide (boolean):`,
-              tab.attributes.hide,
-              "->",
-              hideTab,
-            );
           }
-        } else {
-          // debug log
-          console.log(`Tab ${tabIndex} hide: undefined -> false`);
         }
         this._hiddenTabs.push(hideTab);
 
@@ -164,34 +143,28 @@ export class TabbedCard extends LitElement {
         let disableTab = false;
         if (tab.attributes?.disable !== undefined) {
           if (typeof tab.attributes.disable === "string") {
-            // Evaluate Jinja template
-            const disableResult = await this.evaluateJinjaTemplate(
-              this.hass,
-              tab.attributes.disable,
-            );
-            disableTab = disableResult.toLowerCase() === "true";
-            // debug log
-            console.log(
-              `Tab ${tabIndex} disable (string):`,
-              tab.attributes.disable,
-              "->",
-              disableResult,
-              "->",
-              disableTab,
-            );
+            // Check if it's a simple "true" or "false" string
+            if (tab.attributes.disable.toLowerCase() === "true") {
+              disableTab = true;
+            } else if (tab.attributes.disable.toLowerCase() === "false") {
+              disableTab = false;
+            } else if (
+              tab.attributes.disable.includes("{%") ||
+              tab.attributes.disable.includes("{{")
+            ) {
+              // It's a Jinja template, evaluate it
+              const disableResult = await this.evaluateJinjaTemplate(
+                this.hass,
+                tab.attributes.disable,
+              );
+              disableTab = disableResult.toLowerCase() === "true";
+            } else {
+              // Some other string, treat as false
+              disableTab = false;
+            }
           } else {
             disableTab = !!tab.attributes.disable;
-            // debug log
-            console.log(
-              `Tab ${tabIndex} disable (boolean):`,
-              tab.attributes.disable,
-              "->",
-              disableTab,
-            );
           }
-        } else {
-          // debug log
-          console.log(`Tab ${tabIndex} disable: undefined -> false`);
         }
         this._disabledTabs.push(disableTab);
 
@@ -268,8 +241,6 @@ export class TabbedCard extends LitElement {
     cardElement: LovelaceCard,
     cardConfig: LovelaceCardConfig,
   ) {
-    console.log("_rebuildCard: ", cardElement, cardConfig);
-
     const newCardElement = await this._helpers.createCardElement(cardConfig);
 
     cardElement.replaceWith(newCardElement);
@@ -295,49 +266,23 @@ export class TabbedCard extends LitElement {
   }
 
   private _onTabChange(ev: Event) {
-    // debug log
-    console.log("_onTabChange called with event:", ev);
-
     const newVisibleIndex = (ev.target as any).activeTabIndex;
-    // debug log
-    console.log("newVisibleIndex:", newVisibleIndex);
 
     // Convert visible index to original index
     const visibleTabs = this._tabs
       .map((tab, index) => ({ tab, index }))
       .filter(({ index }) => !this._hiddenTabs[index]);
 
-    // debug log
-    console.log(
-      "visibleTabs indices:",
-      visibleTabs.map(({ index }) => index),
-    );
-
     const newOriginalIndex = visibleTabs[newVisibleIndex]?.index;
 
-    // debug log
-    console.log("newOriginalIndex:", newOriginalIndex);
-    console.log("_disabledTabs array:", this._disabledTabs);
-
     if (newOriginalIndex === undefined) {
-      // debug log
-      console.log("newOriginalIndex is undefined, returning");
       return;
     }
 
     if (this._disabledTabs[newOriginalIndex]) {
-      // debug log
-      console.log(
-        `Tab ${newOriginalIndex} is disabled, not changing selected tab`,
-      );
       // If the new tab is disabled, do not change the selected tab
       return;
     }
-
-    // debug log
-    console.log(
-      `Setting selectedTabIndex from ${this.selectedTabIndex} to ${newOriginalIndex}`,
-    );
     this.selectedTabIndex = newOriginalIndex;
     this.dispatchEvent(
       new CustomEvent("tabbed-card-change", {
@@ -349,35 +294,17 @@ export class TabbedCard extends LitElement {
   }
 
   render() {
-    // debug log
-    console.log("render called");
-
     if (!this.hass || !this._config || !this._helpers || !this._tabs?.length) {
-      // debug log
-      console.log("Missing required properties, returning empty");
       return html``;
     }
-
-    // debug log
-    console.log("_hiddenTabs array:", this._hiddenTabs);
-    console.log("_disabledTabs array:", this._disabledTabs);
-    console.log("selectedTabIndex:", this.selectedTabIndex);
 
     // Filter visible tabs for rendering, but maintain original indices
     const visibleTabs = this._tabs
       .map((tab, index) => ({ tab, index }))
       .filter(({ index }) => !this._hiddenTabs[index]);
 
-    // debug log
-    console.log(
-      "visibleTabs:",
-      visibleTabs.map(({ index }) => index),
-    );
-
     // If no visible tabs, return empty
     if (visibleTabs.length === 0) {
-      // debug log
-      console.log("No visible tabs, returning empty");
       return html``;
     }
 
@@ -386,22 +313,14 @@ export class TabbedCard extends LitElement {
       ({ index }) => index === this.selectedTabIndex,
     );
 
-    // debug log
-    console.log("activeVisibleIndex:", activeVisibleIndex);
-
     return html`
       <md-tabs
         @change=${this._onTabChange}
         style=${styleMap(this._styles)}
         .activeTabIndex=${activeVisibleIndex >= 0 ? activeVisibleIndex : 0}
       >
-        ${visibleTabs.map(({ tab, index }) => {
-          // debug log
-          console.log(`Rendering tab with original index ${index}:`);
-          console.log(`  - Label: ${tab?.attributes?.label}`);
-          console.log(`  - Is disabled: ${this._disabledTabs[index]}`);
-
-          return html`
+        ${visibleTabs.map(
+          ({ tab, index }) => html`
             <md-primary-tab
               style=${ifDefined(
                 styleMap({
@@ -432,19 +351,12 @@ export class TabbedCard extends LitElement {
                 nothing}</span
               >
             </md-primary-tab>
-          `;
-        })}
+          `,
+        )}
       </md-tabs>
       <section>
         <article>
-          ${(() => {
-            // debug log
-            console.log(
-              `Rendering card for tab index ${this.selectedTabIndex}`,
-            );
-            return this._tabs.find((_, index) => index == this.selectedTabIndex)
-              ?.card;
-          })()}
+          ${this._tabs.find((_, index) => index == this.selectedTabIndex)?.card}
         </article>
       </section>
     `;
