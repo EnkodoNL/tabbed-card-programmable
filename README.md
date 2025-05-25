@@ -120,7 +120,7 @@ Default Custom Properties:
 
 | Name                                             | Defaults (All from current HA-theme)       | Description                                 |
 | ------------------------------------------------ | ------------------------------------------ | ------------------------------------------- |
-| `--md-sys-color-primary`                         | 'var(--primary-text-color)'                | Color of the active tab's background.       |
+| `--md-sys-color-primary`                         | 'var(--primary-text-color)'                | Color of the active tab's text color        |
 | `--md-sys-color-on-surface-variant`              | 'rgba(var(--rgb-primary-text-color), 0.6)' | Color of the inactive tab's background.     |
 | `--md-primary-tab-container-color`               | 'transparent'                              | Background color of the tab container.      |
 | `--md-primary-tab-label-text-font`               | 'var(--app-font-family)'                   | Font family for tab labels.                 |
