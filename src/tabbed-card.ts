@@ -89,6 +89,12 @@ export class TabbedCard extends LitElement {
   }
 
   async _createTabs(config: TabbedCardConfig) {
+    // debug log
+    console.log(
+      "_createTabs called with config:",
+      JSON.stringify(config, null, 2),
+    );
+
     const template = config?.options?.defaultTabIndex;
     if (typeof template === "undefined") {
       this.selectedTabIndex = 0;
@@ -103,13 +109,22 @@ export class TabbedCard extends LitElement {
       this.selectedTabIndex = isFinite(template) ? template : 0;
     }
 
+    // debug log
+    console.log("Initial selectedTabIndex:", this.selectedTabIndex);
+
     // Initialize arrays to track hidden and disabled states and processed labels
     this._hiddenTabs = [];
     this._disabledTabs = [];
     this._processedLabels = [];
 
     const tabs = await Promise.all(
-      config.tabs.map(async (tab) => {
+      config.tabs.map(async (tab, tabIndex) => {
+        // debug log
+        console.log(
+          `Processing tab ${tabIndex}:`,
+          JSON.stringify(tab.attributes, null, 2),
+        );
+
         // Check if tab should be hidden
         let hideTab = false;
         if (tab.attributes?.hide !== undefined) {
@@ -120,9 +135,28 @@ export class TabbedCard extends LitElement {
               tab.attributes.hide,
             );
             hideTab = hideResult.toLowerCase() === "true";
+            // debug log
+            console.log(
+              `Tab ${tabIndex} hide (string):`,
+              tab.attributes.hide,
+              "->",
+              hideResult,
+              "->",
+              hideTab,
+            );
           } else {
             hideTab = !!tab.attributes.hide;
+            // debug log
+            console.log(
+              `Tab ${tabIndex} hide (boolean):`,
+              tab.attributes.hide,
+              "->",
+              hideTab,
+            );
           }
+        } else {
+          // debug log
+          console.log(`Tab ${tabIndex} hide: undefined -> false`);
         }
         this._hiddenTabs.push(hideTab);
 
@@ -136,9 +170,28 @@ export class TabbedCard extends LitElement {
               tab.attributes.disable,
             );
             disableTab = disableResult.toLowerCase() === "true";
+            // debug log
+            console.log(
+              `Tab ${tabIndex} disable (string):`,
+              tab.attributes.disable,
+              "->",
+              disableResult,
+              "->",
+              disableTab,
+            );
           } else {
             disableTab = !!tab.attributes.disable;
+            // debug log
+            console.log(
+              `Tab ${tabIndex} disable (boolean):`,
+              tab.attributes.disable,
+              "->",
+              disableTab,
+            );
           }
+        } else {
+          // debug log
+          console.log(`Tab ${tabIndex} disable: undefined -> false`);
         }
         this._disabledTabs.push(disableTab);
 
@@ -242,12 +295,50 @@ export class TabbedCard extends LitElement {
   }
 
   private _onTabChange(ev: Event) {
-    const newTabIndex = (ev.target as any).activeTabIndex;
-    if (this._disabledTabs[newTabIndex]) {
+    // debug log
+    console.log("_onTabChange called with event:", ev);
+
+    const newVisibleIndex = (ev.target as any).activeTabIndex;
+    // debug log
+    console.log("newVisibleIndex:", newVisibleIndex);
+
+    // Convert visible index to original index
+    const visibleTabs = this._tabs
+      .map((tab, index) => ({ tab, index }))
+      .filter(({ index }) => !this._hiddenTabs[index]);
+
+    // debug log
+    console.log(
+      "visibleTabs indices:",
+      visibleTabs.map(({ index }) => index),
+    );
+
+    const newOriginalIndex = visibleTabs[newVisibleIndex]?.index;
+
+    // debug log
+    console.log("newOriginalIndex:", newOriginalIndex);
+    console.log("_disabledTabs array:", this._disabledTabs);
+
+    if (newOriginalIndex === undefined) {
+      // debug log
+      console.log("newOriginalIndex is undefined, returning");
+      return;
+    }
+
+    if (this._disabledTabs[newOriginalIndex]) {
+      // debug log
+      console.log(
+        `Tab ${newOriginalIndex} is disabled, not changing selected tab`,
+      );
       // If the new tab is disabled, do not change the selected tab
       return;
     }
-    this.selectedTabIndex = (ev.target as any).activeTabIndex;
+
+    // debug log
+    console.log(
+      `Setting selectedTabIndex from ${this.selectedTabIndex} to ${newOriginalIndex}`,
+    );
+    this.selectedTabIndex = newOriginalIndex;
     this.dispatchEvent(
       new CustomEvent("tabbed-card-change", {
         detail: { index: this.selectedTabIndex },
@@ -258,17 +349,35 @@ export class TabbedCard extends LitElement {
   }
 
   render() {
+    // debug log
+    console.log("render called");
+
     if (!this.hass || !this._config || !this._helpers || !this._tabs?.length) {
+      // debug log
+      console.log("Missing required properties, returning empty");
       return html``;
     }
+
+    // debug log
+    console.log("_hiddenTabs array:", this._hiddenTabs);
+    console.log("_disabledTabs array:", this._disabledTabs);
+    console.log("selectedTabIndex:", this.selectedTabIndex);
 
     // Filter visible tabs for rendering, but maintain original indices
     const visibleTabs = this._tabs
       .map((tab, index) => ({ tab, index }))
       .filter(({ index }) => !this._hiddenTabs[index]);
 
+    // debug log
+    console.log(
+      "visibleTabs:",
+      visibleTabs.map(({ index }) => index),
+    );
+
     // If no visible tabs, return empty
     if (visibleTabs.length === 0) {
+      // debug log
+      console.log("No visible tabs, returning empty");
       return html``;
     }
 
@@ -277,14 +386,22 @@ export class TabbedCard extends LitElement {
       ({ index }) => index === this.selectedTabIndex,
     );
 
+    // debug log
+    console.log("activeVisibleIndex:", activeVisibleIndex);
+
     return html`
       <md-tabs
         @change=${this._onTabChange}
         style=${styleMap(this._styles)}
         .activeTabIndex=${activeVisibleIndex >= 0 ? activeVisibleIndex : 0}
       >
-        ${visibleTabs.map(
-          ({ tab, index }) => html`
+        ${visibleTabs.map(({ tab, index }) => {
+          // debug log
+          console.log(`Rendering tab with original index ${index}:`);
+          console.log(`  - Label: ${tab?.attributes?.label}`);
+          console.log(`  - Is disabled: ${this._disabledTabs[index]}`);
+
+          return html`
             <md-primary-tab
               style=${ifDefined(
                 styleMap({
@@ -315,12 +432,19 @@ export class TabbedCard extends LitElement {
                 nothing}</span
               >
             </md-primary-tab>
-          `,
-        )}
+          `;
+        })}
       </md-tabs>
       <section>
         <article>
-          ${this._tabs.find((_, index) => index == this.selectedTabIndex)?.card}
+          ${(() => {
+            // debug log
+            console.log(
+              `Rendering card for tab index ${this.selectedTabIndex}`,
+            );
+            return this._tabs.find((_, index) => index == this.selectedTabIndex)
+              ?.card;
+          })()}
         </article>
       </section>
     `;
