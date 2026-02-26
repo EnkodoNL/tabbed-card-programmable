@@ -8,6 +8,11 @@ A custom card for home assistant that utilizes tabs to segregate individual card
 
 As the original dev kinghat did not respond to my pull request (https://github.com/kinghat/tabbed-card/pull/105) for a long time, I decided to fork and publish this as a separate card.
 
+### v0.4.1 - 2026-02-26
+
+- Updated dependencies to latest versions
+- Added support for border color and thickness custom properties for the line below the tabs
+
 ### v0.4.0 - 2025-05-25
 
 Needed some features for my own use case, so I added them to this fork:
@@ -118,17 +123,17 @@ This card tries to closely match home assistants default tab styles. You can ove
 
 Default Custom Properties:
 
-| Name                                             | Defaults (All from current HA-theme)       | Description                                 |
-| ------------------------------------------------ | ------------------------------------------ | ------------------------------------------- |
-| `--md-sys-color-primary`                         | 'var(--primary-text-color)'                | Color of the active tab's text color        |
-| `--md-sys-color-on-surface-variant`              | 'rgba(var(--rgb-primary-text-color), 0.6)' | Color of the inactive tab's background.     |
-| `--md-primary-tab-container-color`               | 'transparent'                              | Background color of the tab container.      |
-| `--md-primary-tab-label-text-font`               | 'var(--app-font-family)'                   | Font family for tab labels.                 |
-| `--md-primary-tab-active-indicator-color`        | 'var(--primary-text-color)'                | Color of the active tab indicator.          |
-| `--md-primary-tab-icon-color`                    | 'rgba(var(--rgb-primary-text-color), 0.6)' | Color of the tab icon.                      |
-| `--md-primary-tab-active-focus-icon-color`       | 'var(--primary-text-color)'                | Color of the active focused tab icon.       |
-| `--md-primary-tab-active-focus-label-text-color` | 'var(--primary-text-color)'                | Color of the active focused tab label text. |
-| `--md-primary-tab-label-text-size`               | 'var(--ha-font-size-m)'                    | Font size for tab labels.                   |
+| Name                                             | Defaults (All from current HA-theme)       | Description                                                  |
+| ------------------------------------------------ | ------------------------------------------ | ------------------------------------------------------------ |
+| `--md-sys-color-primary`                         | 'var(--primary-text-color)'                | Color of the active tab's text color                         |
+| `--md-sys-color-on-surface-variant`              | 'rgba(var(--rgb-primary-text-color), 0.6)' | Color of the inactive tab's background.                      |
+| `--md-primary-tab-container-color`               | 'transparent'                              | Background color of the tab container.                       |
+| `--md-primary-tab-label-text-font`               | 'var(--app-font-family)'                   | Font family for tab labels.                                  |
+| `--md-primary-tab-active-indicator-color`        | 'var(--primary-text-color)'                | Color of the active tab indicator.                           |
+| `--md-primary-tab-icon-color`                    | 'rgba(var(--rgb-primary-text-color), 0.6)' | Color of the tab icon.                                       |
+| `--md-primary-tab-active-focus-icon-color`       | 'var(--primary-text-color)'                | Color of the active focused tab icon.                        |
+| `--md-primary-tab-active-focus-label-text-color` | 'var(--primary-text-color)'                | Color of the active focused tab label text.                  |
+| `--md-primary-tab-label-text-size`               | 'var(--ha-font-size-m)'                    | Font size for tab labels.                                    |
 | `--md-divider-color`                             | 'var(--divider-color, #cac4d0)'            | Color of the line below the tabs. Use 'transparent' to hide. |
 | `--md-divider-thickness`                         | '1px'                                      | Thickness of the line below the tabs. Use '0px' to hide.     |
 
