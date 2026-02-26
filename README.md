@@ -129,6 +129,8 @@ Default Custom Properties:
 | `--md-primary-tab-active-focus-icon-color`       | 'var(--primary-text-color)'                | Color of the active focused tab icon.       |
 | `--md-primary-tab-active-focus-label-text-color` | 'var(--primary-text-color)'                | Color of the active focused tab label text. |
 | `--md-primary-tab-label-text-size`               | 'var(--ha-font-size-m)'                    | Font size for tab labels.                   |
+| `--md-divider-color`                             | 'var(--divider-color, #cac4d0)'            | Color of the line below the tabs. Use 'transparent' to hide. |
+| `--md-divider-thickness`                         | '1px'                                      | Thickness of the line below the tabs. Use '0px' to hide.     |
 
 ```yaml
 type: custom:tabbed-card-programmable

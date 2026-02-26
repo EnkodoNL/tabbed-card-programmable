@@ -40,6 +40,8 @@ export class TabbedCard extends LitElement {
     "--md-primary-tab-active-focus-label-text-color":
       "var(--primary-text-color)",
     "--md-primary-tab-label-text-size": "var(--ha-font-size-m)",
+    "--md-divider-color": "var(--divider-color, #cac4d0)",
+    "--md-divider-thickness": "1px",
   };
 
   private async loadCardHelpers() {

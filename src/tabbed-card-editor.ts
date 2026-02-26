@@ -155,6 +155,22 @@ export class TabbedCardEditor extends LitElement implements LovelaceCardEditor {
           @input=${this._valueChangedStyles}
           helper-text="Font size for tab labels (--md-primary-tab-label-text-size)"
         ></ha-textfield>
+
+        <ha-textfield
+          label="Divider Color"
+          .value=${this._getStyleValue("--md-divider-color")}
+          .configValue=${"--md-divider-color"}
+          @input=${this._valueChangedStyles}
+          helper-text="Color of the line below tabs, use 'transparent' to hide (--md-divider-color)"
+        ></ha-textfield>
+
+        <ha-textfield
+          label="Divider Thickness"
+          .value=${this._getStyleValue("--md-divider-thickness")}
+          .configValue=${"--md-divider-thickness"}
+          @input=${this._valueChangedStyles}
+          helper-text="Thickness of the line below tabs, e.g. '0px' to hide (--md-divider-thickness)"
+        ></ha-textfield>
       </div>
     `;
   }
